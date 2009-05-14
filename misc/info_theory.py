@@ -38,3 +38,9 @@ def mutual_info_XY_Z(P):
 
     #print H_X_Z, H_Y_Z, H_XY_Z
     return H_X_Z + H_Y_Z - H_XY_Z
+
+
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_info_theory import *
+    unittest.main()
