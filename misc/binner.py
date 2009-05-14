@@ -14,7 +14,7 @@ array([ 1.,  2.,  0.,  4.])
 >>> 
 >>> bins = Bins(int, 1, 4, 'lin', 2)
 >>> bins.bin_limits
-[-0.5, 2.5, 5.5]
+(-0.5, 2.5, 5.5)
 >>> bins.widths
 array([2, 2])
 >>> bins.bin_count_divide(data)
@@ -1301,3 +1301,8 @@ class Bins2D(object):
 
         return np.ma.masked_array(binMedians, np.isnan(binMedians))
 
+
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_binner import *
+    unittest.main()
