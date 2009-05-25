@@ -134,8 +134,7 @@ for line in communities:
     cont_d[index] += float(diameter) / n_com[index]
 
 # Coherence
-for i in range(cont_length):
-    cont_q[i] += cont_I[i] / cont_w[i]
+cont_q = cont_I/cont_w
 
 #Print to file
 out_file_name = full_net_edg.split('/')[-1]
