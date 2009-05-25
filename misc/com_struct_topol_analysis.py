@@ -23,7 +23,7 @@ Jon Eiesland
 May 2009
 """
 
-from netpython import * # lce-made net library
+from netpython import * # lce-made net library found in networks/EDEN/nwtool/netpython
 from sys import argv
 from numpy import zeros
 
