@@ -30,22 +30,21 @@ import numpy as np
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    pass
+    def __init__(self, value):
+        self.value = value
+        #print "Error:", value
 
 class ParameterError(Error):
     """Exception raised for errors in the parameter."""
-    def __init__(self, value):
-        self.value = value
+    pass
 
 class BinLimitError(Error):
     """Exception raised when bin limits are invalid."""
-    def __init__(self, value):
-        self.value = value
+    pass
 
 class DataTypeError(Error):
     """Exception raised when wrong kind of data is given."""
-    def __init__(self, value):
-        self.value = value
+    pass
         
 def normalize(x):
     """Normalize a sequence
