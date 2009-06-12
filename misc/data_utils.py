@@ -4,7 +4,7 @@ import operator
 import sys
 
 def read_columns(filename, header_rows, types, columns = None, sep=None):
-    """ Read columns of a file into lists
+    """Read columns of a file into lists
 
     Read the columns in file into lists, ignoring headers, and
     converting the values in column i to type types[i]. By default the
@@ -108,19 +108,37 @@ def read_columns(filename, header_rows, types, columns = None, sep=None):
 
 
 def gen_columns(filename, header_rows, types, columns = None, sep=None):
-    """Generates tuples with values corresponding to those in columns.
+    """Generate column data from a file
 
-    Read the given columns in given file, ignoring the first
-    header_rows lines, and converting the values in column i to type
-    types[i]. A tuple containing the values is return at each
-    iteration.  By default the len(types) first columns are read,
-    other columns must be specified explisitely (the first column is
-    0). Filename can be either a string or a file object.
+    This function works exactly as read_columns, but instead of
+    reading the whole file and returning the columns as lists, this
+    functions is a generator and at each iteration yields a tuple with
+    the values of each column.
 
-    Examples:
+    This function is especially handy when used with the Bins class
+    for binning data straight from a file, because Bins can take a
+    generator as input data.
+
+    Parameters
+    ----------
+    (See function read_columns.)
+
+    Yield
+    -----
+    column_data : tuple
+        The values in each column of the current row.
+
+    Except
+    ------
+    (See function read_columns.)
+
+    Examples
+    --------
+    >>> # Print the values in the first two columns.
     >>> for values in gen_columns('input.txt', 2, (int, int)):
             print values
 
+    >>> # Print the values in second and fifth columns.
     >>> inputFile = open('input.txt')
     >>> for (col1, col4) in gen_columns(inputFile, 2, (int, float), (1,4)):
             print '%d: %d' % (col1, col4) 
@@ -170,6 +188,7 @@ def gen_columns(filename, header_rows, types, columns = None, sep=None):
         # Line read successfully, give output.
         yield tuple(converted_fields)
 
+    # Close file if filename is a string.
     if isinstance(filename, str):
         f.close()
         
