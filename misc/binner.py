@@ -594,11 +594,11 @@ class Bins(object):
             factor.
 
         'linlog': param = factor (float, > 1)
-            Construct linear bins with width 1.0 from min(1, minValue)
-            to max(10, maxValue) and logarithmic bins with from
-            thereon, using factor to increase bin size. Both minValue
-            and maxValue must be integers, otherwise expection
-            ValueError is raised.
+            Construct linear bins with width 1.0 from max(0, minValue)
+            to min(10, maxValue) and logarithmic bins from thereon,
+            using factor to increase bin size. Both minValue and
+            maxValue must be integers whenever they are smaller than
+            11, otherwise expection ValueError is raised.
 
         'maxlog': param = diff (float, 0 < diff < 1)
             Construct as many logarithmic bins as possible between
