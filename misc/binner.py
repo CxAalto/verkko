@@ -206,8 +206,16 @@ class _linlogBinFinder(_binFinder):
     def __init__(self, bin_limits):
         self.bin_limit = np.min(10.5, bin_limits[-1])
         self.N_lin_bins = int(self.bin_limit - bin_limits[0])
-        self.lin_bf = _linBinFinder(bin_limits[:self.N_lin_bins+1])
-        self.log_bf = _logBinFinder(bin_limits[self.N_lin_bins:])
+        # Create linear binner if linear bins exist.
+        if self.N_lin_bins > 0:
+            self.lin_bf = _linBinFinder(bin_limits[:self.N_lin_bins+1])
+        else:
+            self.lin_bf = None
+        # Create logarithmic binner if logarithmic bins exist.
+        if bin_limits[-1] > 10.5:
+            self.log_bf = _logBinFinder(bin_limits[self.N_lin_bins:])
+        else:
+            self.log_bf = None
         
     def __call__(self, value):
         if value < self.bin_limit:
@@ -218,7 +226,7 @@ class _linlogBinFinder(_binFinder):
 class _BinLimits(tuple):
     """Class that represents the bin limits.
 
-    Implemented as a list object with additional methods to facilitate
+    Implemented as a tuple with additional methods to facilitate
     construction and getting the centers and widths of the bins.
     """
 
@@ -267,7 +275,7 @@ class _BinLimits(tuple):
         uselinear : boolean (True)
             If True, linear bins will be used between
             min(1, minValue) and max(10, maxValue). Each
-            linear bin will include one integer
+            linear bin will include one integer.
 
         Return
         ------
@@ -349,32 +357,48 @@ class _BinLimits(tuple):
 
         if minValue >= maxValue:
             raise BinLimitError("minValue must be larger than maxValue.")
-        if 'log' in binType:
+
+        if binType in ('log', 'logarithmic', 'maxlog'):
             if minValue <= 0:
-                # minValue must be positive in logarithmic bins.
+                # minValue must be strictly positive in logarithmic bins.
                 raise BinLimitError("minValue must be strictly positive "
                                     "with '%s' bin type." % (binType,))
-            if binType in ('log', 'logarithmic', 'linlog'):
-                if param <= 1:
-                    # factor must be larger than 1.
-                    raise ParameterError("factor (param) must be larger than"
-                                         " 1 with '%s' bin type."%(binType,))
-            elif binType in ('maxlog', 'linmaxlog') and param != None:
-                if (param <= 0 or param > 1):
-                    # diff must be in [0,1).
-                    raise ParameterError("diff (param) must be in open "
-                                         "interval (0,1) with '%s' bin type."
-                                         % binType)
+
         if binType in ('linlog', 'linmaxlog'):
-            # linlog types only work with integer limits.
-            if not (isinstance(minValue, int) and
-                    isinstance(maxValue, int)):
-                raise BinLimitError("minValue and maxValue must be integers "
+            # minValue must be positive in logarithmic bins.
+            if minValue < 0:
+                raise BinLimitError("minValue must be positive "
                                     "with '%s' bin type." % (binType,))
+
+            # The lower limit in linlog types must be integer, and
+            # also the upper limit if it is below 10.5.
+            if minValue < 11 and not isinstance(minValue, int):
+                raise BinLimitError("When minValue < 11, minValue must be integer "
+                                    "with '%s' bin type." % (binType,))
+
+            if maxValue < 11 and not isinstance(maxValue, int):
+                raise BinLimitError("When maxValue < 11, maxValue must be integer "
+                                    "with '%s' bin type." % (binType,))
+
+
+        if binType in ('log', 'logarithmic', 'linlog'):
+            if param <= 1:
+                # factor must be larger than 1.
+                raise ParameterError("factor (param) must be larger than"
+                                     " 1 with '%s' bin type."%(binType,))
+
+        if binType in ('maxlog', 'linmaxlog') and param != None:
+            if (param <= 0 or param > 1):
+                # diff must be in [0,1).
+                raise ParameterError("diff (param) must be in open "
+                                     "interval (0,1) with '%s' bin type."
+                                     % binType)
+
         if binType in ('lin', 'linear'):
             if not isinstance(param, int) or param <= 0:
                 raise ParameterError("Number of bins (param) must "
                                      "be a positive integer.")
+
         if binType == 'custom' and not (np.diff(param) > 0).all():
                 raise ParameterError("Bin limits (param) must be an "
                                      "increasing sequence.")

@@ -51,7 +51,7 @@ class TestBins(unittest.TestCase):
         self.assertRaises(binner.ParameterError, binner.Bins, int, 1, 10, 'linmaxlog', 1.1)
         # Linear-logarithmic bins with non-integer bin limits
         self.assertRaises(binner.BinLimitError, binner.Bins, int, 1.5, 20, 'linlog', 2)
-        self.assertRaises(binner.BinLimitError, binner.Bins, int, 1, 20.1, 'linmaxlog')
+        self.assertRaises(binner.BinLimitError, binner.Bins, int, 1, 10.1, 'linmaxlog')
         # Linear bins with <= 0 bins or with a floating point number of bins.
         self.assertRaises(binner.ParameterError, binner.Bins, int, 1, 10, 'linear', 0)
         self.assertRaises(binner.ParameterError, binner.Bins, int, 1, 10, 'linear', 10.5)
@@ -99,6 +99,11 @@ class TestBins(unittest.TestCase):
         b = binner.Bins(float, 7, 12, 'linlog', 2)
         expected_widths = [0.5,1,1,1,10.5]
         self.assertEqual(b.widths.tolist(), expected_widths)
+
+        b = binner.Bins(float, 0, 12, 'linlog', 2)
+        expected_widths = [0.5,1,1,1,1,1,1,1,1,1,1,10.5]
+        self.assertEqual(b.widths.tolist(), expected_widths)
+
 
     def test_Maxlogbins(self):
         minValue = 1
@@ -201,6 +206,7 @@ class TestBins(unittest.TestCase):
         assert bf(84) > len(bins)-2
         assert bf(111) > len(bins)-2
 
+        # Large bin values.
         bins = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 42, 168, 672, 2688]
         bf = binner._linlogBinFinder(bins)
         self.assertEqual(bf(6), 0)
@@ -208,6 +214,13 @@ class TestBins(unittest.TestCase):
         self.assertEqual(bf(100), 6)
         self.assertEqual(bf(42), 6)
         self.assertEqual(bf(168), 7)
+
+        # First bin centered at zero.
+        bins = [-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5]
+        bf = binner._linlogBinFinder(bins)
+        self.assertEqual(bf(0), 0)
+        self.assertEqual(bf(4), 4)
+        
 
     def test_conformity(self):
         """ The general search in the base class binFinder whould
@@ -412,10 +425,10 @@ class Test_Bins2D(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if False:
+    if True:
         # Run only one test.
         suite = unittest.TestSuite()
-        suite.addTest(TestBinner("test_Linbins_int"))
+        suite.addTest(TestBins("test_linlogBinFinder_2"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
