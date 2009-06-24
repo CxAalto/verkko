@@ -784,9 +784,10 @@ class Bins(object):
         """
         return self.bin_sum(data)/self.widths
     
-    def bin_average(self, data):
+    def bin_average(self, data, variances=False):
         """
-        Bin data and return the average of data points in each bin.
+        Bin data and return the average of data points in each bin. If
+        variances = True, return also the variance in each bin.
 
         Parameters
         ----------
@@ -797,11 +798,18 @@ class Bins(object):
 
         Returns
         -------
-        binned_data : ma.masked_array
-            The binned data, with length N, where binned_data[i] is
-            the average of all values that fall into the bin. The bins
-            with no values are masked. To get a plain list, use
-            binned_data.tolist().
+        variances = False, 
+            binned_data : ma.masked_array
+                The binned data, with length N, where binned_data[i]
+                is the average of all values that fall into the
+                bin. The bins with no values are masked. To get a
+                plain list, use binned_data.tolist().
+
+        variances = True:
+            binned_data : tuple (ma.masked_array, ma.masked_array)
+                The first elements is the average in each bin as
+                above, and the second element is the variance of the
+                data in each bin.
 
         Exceptions
         ----------
@@ -809,6 +817,7 @@ class Bins(object):
         Raise DataTypeError if data does not consist of pairs. 
         """
         binValues = np.zeros(len(self), float)
+        binSquares = np.zeros(len(self), float)
         binCounts = np.zeros(len(self), float)
 
         for elem in data:
@@ -825,12 +834,21 @@ class Bins(object):
             binCounts[curr_bin] += 1
             try:
                 binValues[curr_bin] += elem[1]
+                binSquares[curr_bin] += elem[1]**2
             except IndexError:
                 raise DataTypeError("Elements of input data must be sequences"
                                     " with length at least 2.")
 
+        # Calculate averages as masked array.
         binCounts = np.ma.masked_array(binCounts, binCounts == 0)
-        return binValues/binCounts
+        ma_averages = binValues/binCounts
+        
+        if variances:
+            return ma_averages, binSquares/binCounts - ma_averages**2
+        else:
+            return ma_averages
+
+
 
     def bin_weighted_average(self, data):
         """
