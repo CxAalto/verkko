@@ -308,6 +308,15 @@ class TestBins(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_weighted_average, self.bad_wdata_A)
         self.assertRaises(binner.BinLimitError, self.bins.bin_weighted_average, self.bad_wdata_B)
 
+    def test_WeightedAverage_Variance(self):
+        # Check correct result
+        binned_data = self.bins.bin_weighted_average(self.weighted_data, True)
+        expected_average = [None,None,2.5,11.8,23./5,20,1.6,None,10]
+        expected_variance = [None,None,2.0, 0.9*4+1000-11.8**2,
+                             (3+200)/5.0-(23./5)**2, 0.0,0.0,None,0.0]
+        self.assertEqual(binned_data[0].tolist(), expected_average)
+        self.assertEqual(binned_data[1].tolist(), expected_variance)
+
     def test_Median(self):
         # Check correct result
         new_data = zip(self.coords + [4,11], self.values + [1,30])
@@ -385,6 +394,19 @@ class Test_Bins2D(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_A)
         self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_B)
 
+    def test_Average_Variance(self):
+        binned_data = self.bins.bin_average(self.data, True)
+        expected_average = [[2,None,None,1],[5,5,8,None]]
+        expected_variance = [[1.0,None,None,0.0],[4.0,0.0,4.0,None]]
+        self.assertEqual(binned_data[0].tolist(), expected_average)
+        self.assertEqual(binned_data[1].tolist(), expected_variance)
+
+        # Check exceptions
+        self.assertRaises(binner.DataTypeError, self.bins.bin_average, self.x_coords)
+        self.assertRaises(binner.DataTypeError, self.bins.bin_average, self.coords)
+        self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_A)
+        self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_B)
+
     def test_Sum(self):
         binned_data = self.bins.bin_sum(self.data)
         expected_result = [[4,None,None,1], [10,5,16,None]]
@@ -420,6 +442,14 @@ class Test_Bins2D(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_weighted_average, self.bad_wdata_A)
         self.assertRaises(binner.BinLimitError, self.bins.bin_weighted_average, self.bad_wdata_B)
 
+    def test_Weighted_average_Variance(self):
+        binned_data = self.bins.bin_weighted_average(self.weighted_data, True)
+        expected_average = [[10./4,None,None,1],[7,0,700./110,None]]
+        expected_variance = [[0.75,None,None,0.0],[0.0,0.0,4600/110.0-(700./110)**2,None]]
+        self.assertEqual(binned_data[0].tolist(), expected_average)
+        self.assertEqual(binned_data[1].tolist(), expected_variance)
+
+
     def test_Median(self):
         binned_data = self.bins.bin_median(self.data)
         expected_result = [[2,None,None,1],[5,5,8,None]]
@@ -433,6 +463,9 @@ class Test_Bins2D(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # The if clause exists only for debugging; it makes it easier to
+    # run only one test instead of all of them. Also, the tests are
+    # normally run by running binner.py.
     if True:
         # Run only one test.
         suite = unittest.TestSuite()
