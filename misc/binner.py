@@ -30,9 +30,7 @@ import numpy as np
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    def __init__(self, value):
-        self.value = value
-        #print "Error:", value
+    pass
 
 class ParameterError(Error):
     """Exception raised for errors in the parameter."""
@@ -1301,6 +1299,7 @@ class Bins2D(object):
         saving all elements. If the number of data points is very
         large, this method can take up a large amount of memory.
         """
+        
         binElements = [ [ [] for i in range(self.shape[1])]
                         for j in range(self.shape[0])]
 
