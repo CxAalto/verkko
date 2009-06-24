@@ -288,6 +288,14 @@ class TestBins(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_A)
         self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_B)
 
+    def test_Average_Variance(self):
+        # Check correct result
+        binned_data = self.bins.bin_average(self.data, True)
+        expected_average = [None,None,2,51,5.5,20,1.6,None,10]
+        expected_variance = [None,None,2.25,2401.0,20.25,0.0,0.0,None,0.0]
+        self.assertEqual(binned_data[0].tolist(), expected_average)
+        self.assertEqual(binned_data[1].tolist(), expected_variance)
+
     def test_WeightedAverage(self):
         # Check correct result
         binned_data = self.bins.bin_weighted_average(self.weighted_data)
@@ -428,7 +436,7 @@ if __name__ == '__main__':
     if True:
         # Run only one test.
         suite = unittest.TestSuite()
-        suite.addTest(TestBins("test_linlogBinFinder_2"))
+        suite.addTest(TestBins("test_AverageVariance"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
