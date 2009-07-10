@@ -2,6 +2,7 @@
 from math import sqrt, floor, ceil
 import operator
 import sys
+import numpy as np
 
 def read_columns(filename, header_rows, types, columns = None, sep=None):
     """Read columns of a file into lists
@@ -162,7 +163,7 @@ def gen_columns(filename, header_rows, types, columns = None, sep=None):
     elif isinstance(filename, file):
         f = filename
 
-    # Read through headers        
+    # Read through headers
     for i in range(header_rows):
         f.next()
         
@@ -226,3 +227,76 @@ def percentile(data, p):
     fraq = i - i_lower
     return (1-fraq)*data[i_lower] + fraq*data[i_upper]
 
+
+def cumulative_dist(data, prob=None, format='descending'):
+    """Create cumulative distribution from given data
+
+    Parameters
+    ----------
+    data : sequence
+        The input data whose cumulative distribution will be
+        created. If prob=None, data may include the same value
+        multiple times.
+    prob : sequence
+        If None, the distribution is created from data alone;
+        otherwise prob[i] is used as the probability of value
+        data[i]. The values in prob will be normalized, so plain
+        counts may be used also instead of probabilities.
+    format : string
+        If 'descending', the returned cumulative distribution is P(x
+        >= X). If 'ascenting', it will be P(x <= X).
+
+    Return
+    ------
+    (value, cum_prob) : (list, list)
+        Data points and their cumulative probabilities. The cumulative
+        probability of value[i] is cum_prob[i]. value is sorted in
+        ascenting order.
+
+    Exceptions
+    ----------
+    ValueError : If format is not 'descending' or 'ascenting'.
+    ValueError : If prob != None but its length does not match the
+                 length of data.
+    """
+
+    # Make sure format is either 'descending' or 'ascenting'.
+    if format not in ('descending', 'ascenting'):
+        raise ValueError("The 'format' parameter must be either "
+                         "'descending' or 'ascenting', got '"+str(format)+"'.")
+
+    # Check the length of prob.
+    if prob is not None and len(prob) != len(data):
+        raise ValueError("The length of 'prob' does not match the "
+                         "length of 'data'.")
+    
+    # If prob is not given, go through the data and create it. If prob
+    # is given, sort it with data.
+    if prob is None:
+        data_dict = {}
+        for x in data:
+            data_dict[x] = data_dict.get(x,0) + 1
+        deco = sorted(data_dict.items())
+    else:
+        deco = sorted(zip(data, prob))
+
+    data = map(operator.itemgetter(0), deco)
+    prob = map(operator.itemgetter(1), deco)
+
+    # Turn prob into an array and normalize it.
+    prob = np.array(prob, float)
+    prob /= prob.sum()
+
+    # Create cumulative distribution.
+    cum_prob = np.cumsum(prob)
+    if format == 'descending':
+        cum_prob = list(1 - cum_prob)
+        cum_prob = [1] + cum_prob[:-1]
+
+    return (list(data), list(cum_prob))
+
+
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_data_utils import *
+    unittest.main()
