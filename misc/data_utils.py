@@ -88,15 +88,14 @@ def read_columns(filename, header_rows, types, columns = None, sep=None):
             for i, col in enumerate(columns):
                 converted_fields[i] = types[i](fields[col])
         except ValueError:
-            print "read_columns: Error reading line " + str(line_number + header_rows + 1) + \
-                  ", column " + str(col) + ":"
-            print "              Unable to convert " + fields[col] + " to " + str(types[i])
-            exit()
+            raise ValueError("Line %d, column %d: "
+                             "Unable to convert '%s' to %s." % 
+                             (line_number+header_rows+1,col,fields[col],
+                              str(types[i])))
         except IndexError:
-            print "read_columns: Error reading line " + str(line_number + header_rows + 1) + ":"
-            print "              Column " + str(col) + " not found."
-            exit()
-            
+            raise IndexError("Line %d: Column %d not found." 
+                             % (line_number+header_rows+1, col))
+
         # Line read successfully, add to data.
         for i in range(len(columns)):
             data[i].append(converted_fields[i])
@@ -175,17 +174,14 @@ def gen_columns(filename, header_rows, types, columns = None, sep=None):
             for i, col in enumerate(columns):
                 converted_fields.append( types[i](fields[col]) )
         except ValueError:
-            print ("read_columns: Error reading line %d, column %d:\n" +
-                   "              Unable to convert %s to %s"
-                   % (line_number + header_rows + 1, col,
-                      fields[col], str(types[i])) )
-            exit()
+            raise ValueError("Line %d, column %d: "
+                             "Unable to convert '%s' to %s." % 
+                             (line_number+header_rows+1,col,fields[col],
+                              str(types[i])))
         except IndexError:
-            print ("read_columns: Error reading line %d:\n" +
-                   "              Column %d not found."
-                   % (line_number + header_rows + 1, col))
-            exit()
-            
+            raise IndexError("Line %d: Column %d not found." 
+                             % (line_number+header_rows+1, col))
+
         # Line read successfully, give output.
         yield tuple(converted_fields)
 
