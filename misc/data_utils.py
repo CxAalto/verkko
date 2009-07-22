@@ -190,6 +190,80 @@ def gen_columns(filename, header_rows, types, columns = None, sep=None):
         f.close()
         
 
+def process_columns(filename, header_rows, fun):
+    """Read columns of a file by filtering lines with fun.
+
+    Read the columns in file into lists, ignoring headers, and process
+    the values in each row with fun. The return values of fun are
+    collected into lists. Filename can be either a string or a file
+    object.
+
+    Parameters
+    ----------
+    filename : string or a file object
+        The input file to read. Note that if a file object is given,
+        the caller is responsible for closing the file.
+    header_rows : int
+        The number of header rows in the files to skip before the
+        actual data begins.
+    fun : function
+        Function for processing a single line. fun takes in a list of
+        strings (values in each column) and outputs the processed
+        data. The n:th list in the output of process_columns will
+        consist of the n:th elements of the outputs of fun.
+
+    Return
+    ------
+    data : tuple of lists
+        The n:th list contains all n:th return values of fun.
+
+    Examples
+    --------
+    >>> # Sum columns 0 and 2, multiply columns 1 and 3.
+    >>> # Exclude the two first rows (headers).
+    >>> def myFun(cols):
+    ...     fields = map(int, cols)
+    ...     return fields[0]+fields[2], fields[1]*fields[3]
+    ...
+    >>> sum02, mult13 = process_columns('input.txt', 2, myFun)
+
+    """
+
+    # Open file
+    if isinstance(filename, str):
+        try:
+            f = open(filename, 'rU')
+        except IOError:
+            raise
+    elif isinstance(filename, file):
+        f = filename
+
+    # Read through headers        
+    for i in range(header_rows):
+        f.next()
+
+    # Read first line to find out the return type of fun.
+    fun_output = fun(f.next().split())
+    wrapper = lambda x: (x,)
+    output_len = 1
+    if isinstance(fun_output, (tuple, list)):
+        wrapper = lambda x: x
+        output_len = len(fun_output)
+
+    # Add the first read line.
+    data = [[x] for x in wrapper(fun_output)]
+    
+    for line_number, line in enumerate(f):
+        data_out = wrapper(fun(line.split()))
+        for i in range(output_len):
+            data[i].append(data_out[i])
+
+    if isinstance(filename, str):
+        f.close()
+        
+    return data
+
+
 def percentile(data, p):
     """Calculate the p-percentile of data
 
