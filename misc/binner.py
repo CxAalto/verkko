@@ -1,28 +1,15 @@
-"""Bin data into 1 or 2-dimensional bins
+#!/usr/bin/python2.6
+#
+# Lauri Kovanen, 2009 (lauri.kovanen@gmail.com)
+# Department of Biomedical Engineering and Computational Science
+# Helsinki University of Technology
+"""Bin data into 1 or 2-dimensional bins.
 
-Usage (1-d):
-
->>> from binner import Bins
->>>
->>> data = [1, 2, 2, 4, 4, 4, 4]
->>> bins = Bins(int, min(data), max(data), 'lin', 4)
->>> bins.centers
-array([ 1.,  2.,  3.,  4.])
->>> bins.bin_count(data)
-array([ 1.,  2.,  0.,  4.])
->>>
->>> 
->>> bins = Bins(int, 1, 4, 'lin', 2)
->>> bins.bin_limits
-(-0.5, 2.5, 5.5)
->>> bins.widths
-array([2, 2])
->>> bins.bin_count_divide(data)
-array([ 1.5, 2.])
-
-See help(binner.Bins) and help(binner.Bins2D) for more information on
-constructing and using different bins.
+   Bins: Bin data into 1-dimensional bins.
+   Bins2D: Bin data into 1-dimensional bins.
+   normalize(): Divide a sequence by its sum.
 """
+
 
 from math import ceil, floor, sqrt
 from operator import itemgetter
@@ -50,10 +37,7 @@ def normalize(x):
     Returns the sequence where each element is divided by the sum of
     all elements.
     """
-    normalization=float(sum(x))
-    for i in range(len(x)):
-        x[i] = x[i]/normalization
-    return x
+    return list(np.array(x,float)/sum(x))
 
 class _binFinder(object):
     """
@@ -675,9 +659,9 @@ class Bins(object):
         for elem in coords:
             if (elem < self.bin_limits.minValue or
                 elem > self.bin_limits.maxValue):
-                raise BinLimitError("Value %g is not in [%g, %g]." %
-                                    (elem, self.bin_limits.minValue,
-                                     self.bin_limits.maxValue) )
+                raise BinLimitError("Value %g is not in the interval [%g, %g]."
+                                    % (elem, self.bin_limits.minValue,
+                                       self.bin_limits.maxValue) )
             curr_bin = self.bin_finder(elem)
             binCounts[curr_bin] += 1
 
@@ -740,9 +724,10 @@ class Bins(object):
             try:
                 if (elem[0] < self.bin_limits.minValue or
                     elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in [%g, %g]." %
-                                        (elem[0], self.bin_limits.minValue,
-                                         self.bin_limits.maxValue))
+                    raise BinLimitError("Value %g is not in the interval [%g, "
+                                        "%g]."% (elem[0],
+                                                 self.bin_limits.minValue,
+                                                 self.bin_limits.maxValue))
             except TypeError:
                 raise DataTypeError("Elements of input data must be sequences"
                                     " with length at least 2.")
@@ -824,9 +809,10 @@ class Bins(object):
             try:
                 if (elem[0] < self.bin_limits.minValue or
                     elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in [%g, %g]." %
-                                        (elem[0], self.bin_limits.minValue,
-                                         self.bin_limits.maxValue) )
+                    raise BinLimitError("Value %g is not in the interval [%g, "
+                                        "%g]." % (elem[0],
+                                                  self.bin_limits.minValue,
+                                                  self.bin_limits.maxValue) )
             except TypeError:
                 raise DataTypeError("Elements of input data must be sequences"
                                     " with length at least 2.")
@@ -892,9 +878,10 @@ class Bins(object):
             try:
                 if (elem[0] < self.bin_limits.minValue
                     or elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in [%g, %g]." %
-                                        (elem[0], self.bin_limits.minValue,
-                                         self.bin_limits.maxValue) )
+                    raise BinLimitError("Value %g is not in the interval [%g, "
+                                        "%g]." % (elem[0],
+                                                  self.bin_limits.minValue,
+                                                  self.bin_limits.maxValue) )
             except TypeError:
                 raise DataTypeError("Elements of input data must be sequences"
                                     " with length at least 3.")
@@ -954,9 +941,10 @@ class Bins(object):
             try:
                 if (elem[0] < self.bin_limits.minValue or
                     elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in [%g, %g]." %
-                                        (elem[0], self.bin_limits.minValue,
-                                         self.bin_limits.maxValue) )
+                    raise BinLimitError("Value %g is not in the interval [%g, "
+                                        "%g]." % (elem[0],
+                                                  self.bin_limits.minValue,
+                                                  self.bin_limits.maxValue) )
             except TypeError:
                 raise DataTypeError("Elements of input data must be sequences"
                                     " with length at least 3.")
@@ -1007,11 +995,9 @@ class Bins2D(object):
         self.x_bin_finder = self.x_limits.bin_finder
         self.y_bin_finder = self.y_limits.bin_finder
 
-    # Create getter for shape
-
     @property
     def shape(self):
-        """Return shape of bins."""
+        """Shape of bins."""
         try:
             return self._shape
         except AttributeError:
@@ -1030,10 +1016,9 @@ class Bins2D(object):
                              self.y_limits.centers())
             return self._centers
 
-    # Create getter for bin centers.
     @property
     def center_grids(self):
-        """Return meshgrid of bin centers."""
+        """Meshgrid of bin centers."""
         try:
             return self._center_grids
         except AttributeError:
@@ -1041,10 +1026,23 @@ class Bins2D(object):
                                              self.y_limits.centers())
             return self._center_grids
 
-    # Create getter for bin widths.
+    @property
+    def edge_grids(self):
+        """Meshgrid of bin edges.
+
+        The edge meshgrids should be used with the matplotlib.pcolor
+        command.
+        """
+        try:
+            return self._edge_grids
+        except AttributeError:
+            self._edge_grids = np.meshgrid(self.x_limits,self.y_limits)
+            return self._edge_grids
+
+
     @property
     def sizes(self):
-        """Return bin sizes as 2-d array."""
+        """Bin sizes as 2-d array."""
         try:
             return self.bin_widths
         except AttributeError:
@@ -1063,13 +1061,13 @@ class Bins2D(object):
         try:
             if (elem[0] < self.x_limits.minValue or
                 elem[0] > self.x_limits.maxValue):
-                raise BinLimitError("X-coordinate %g is not in [%g, %g]."
-                                    % (elem[0], self.x_limits.minValue,
-                                       self.x_limits.maxValue) )
+                raise BinLimitError("X-coordinate %g is not in the interval [%g"
+                                    ", %g]." % (elem[0], self.x_limits.minValue,
+                                                self.x_limits.maxValue) )
             elif (elem[1] < self.y_limits.minValue or
                   elem[1] > self.y_limits.maxValue):
-                raise BinLimitError("Y-coordinate %g is not in [%g, %g]."
-                                    % (elem[1], self.y_limits.minValue,
+                raise BinLimitError("Y-coordinate %g is not in the interval [%g"
+                                    ", %g]." % (elem[1], self.y_limits.minValue,
                                        self.y_limits.maxValue) )
         except TypeError:
             raise DataTypeError("Elements of input data must be sequences "
