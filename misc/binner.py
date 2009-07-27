@@ -633,6 +633,31 @@ class Bins(object):
             self._bin_widths = self.bin_limits.widths()
             return self._bin_widths
 
+    def __check_data_element(self, elem, N):
+        """Check one element of input data.
+
+        Makes sure that elem is a sequence and elem[0] fits inside the
+        bin limits. The required length N is _not_ checked (for
+        performance reasons this is better done when actually needed)
+        but is only shown in the error message if elem is not a sequence.
+        """
+        # Check bin limits and correct sequence type.
+        try:
+            if (elem[0] < self.bin_limits.minValue or
+                elem[0] > self.bin_limits.maxValue):
+                raise BinLimitError("Value %g is not in the interval [%g, "
+                                    "%g]."% (elem[0],
+                                             self.bin_limits.minValue,
+                                             self.bin_limits.maxValue))
+        except (TypeError, IndexError):
+            # TypeError occurs when data is a list and elem is
+            # integer or a float. Rather surprisingly, numpy
+            # raises an IndexError in the same situation; try for
+            # instance creating a=numpy.array([1,2,3]) and then
+            # call a[0][0].
+            raise DataTypeError("Elements of input data must be sequences"
+                                " with length at least %d." % (N,))
+
     def bin_count(self, coords):
         """
         Bin data and return the number of data points in each bin.
@@ -657,6 +682,8 @@ class Bins(object):
         binCounts = np.zeros(len(self), float)
 
         for elem in coords:
+            # Check element right here because with bin_count it is
+            # not required to be a sequence.
             if (elem < self.bin_limits.minValue or
                 elem > self.bin_limits.maxValue):
                 raise BinLimitError("Value %g is not in the interval [%g, %g]."
@@ -721,16 +748,7 @@ class Bins(object):
 
         for elem in data:
             # Make sure the data is valid.
-            try:
-                if (elem[0] < self.bin_limits.minValue or
-                    elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in the interval [%g, "
-                                        "%g]."% (elem[0],
-                                                 self.bin_limits.minValue,
-                                                 self.bin_limits.maxValue))
-            except TypeError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 2.")
+            self.__check_data_element(elem, 2)
             # Find the correct bin and increase count.
             curr_bin = self.bin_finder(elem[0])
             binCounts[curr_bin] += 1
@@ -806,16 +824,9 @@ class Bins(object):
         binCounts = np.zeros(len(self), float)
 
         for elem in data:
-            try:
-                if (elem[0] < self.bin_limits.minValue or
-                    elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in the interval [%g, "
-                                        "%g]." % (elem[0],
-                                                  self.bin_limits.minValue,
-                                                  self.bin_limits.maxValue) )
-            except TypeError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 2.")
+            # Make sure the data is valid.
+            self.__check_data_element(elem, 2)
+            # Find the correct bin.
             curr_bin = self.bin_finder(elem[0])
             binCounts[curr_bin] += 1
             try:
@@ -875,16 +886,9 @@ class Bins(object):
         binWeights = np.zeros(len(self), float)
         
         for elem in data:
-            try:
-                if (elem[0] < self.bin_limits.minValue
-                    or elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in the interval [%g, "
-                                        "%g]." % (elem[0],
-                                                  self.bin_limits.minValue,
-                                                  self.bin_limits.maxValue) )
-            except TypeError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 3.")
+            # Make sure the data is valid.
+            self.__check_data_element(elem, 3)
+            # Find the correct bin.
             curr_bin = self.bin_finder(elem[0])
             binCounts[curr_bin] += 1
             try:
@@ -938,16 +942,9 @@ class Bins(object):
         binElements = [ [] for i in range(len(self))]
 
         for elem in data:
-            try:
-                if (elem[0] < self.bin_limits.minValue or
-                    elem[0] > self.bin_limits.maxValue):
-                    raise BinLimitError("Value %g is not in the interval [%g, "
-                                        "%g]." % (elem[0],
-                                                  self.bin_limits.minValue,
-                                                  self.bin_limits.maxValue) )
-            except TypeError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 3.")
+            # Make sure the data is valid.
+            self.__check_data_element(elem, 2)
+            # Find the correct bin.
             curr_bin = self.bin_finder(elem[0])
             # Append the list of elements in the bin. BinLimitError
             # occurs if bin goes over the top, and DataTypeError
@@ -1069,7 +1066,12 @@ class Bins2D(object):
                 raise BinLimitError("Y-coordinate %g is not in the interval [%g"
                                     ", %g]." % (elem[1], self.y_limits.minValue,
                                        self.y_limits.maxValue) )
-        except TypeError:
+        except TypeError, IndexError:
+            # TypeError occurs when data is a list and elem is
+            # integer or a float. Rather surprisingly, numpy
+            # raises an IndexError in the same situation; try for
+            # instance creating a=numpy.array([1,2,3]) and then
+            # call a[0][0].
             raise DataTypeError("Elements of input data must be sequences "
                                 "with length at least %d." % (N,))
         
