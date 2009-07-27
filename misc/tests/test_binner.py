@@ -1,6 +1,7 @@
 import unittest
 from operator import itemgetter
 import binner
+import numpy # Used only for testing with numpy arrays.
 
 class TestBins(unittest.TestCase):
     def setUp(self):
@@ -265,6 +266,18 @@ class TestBins(unittest.TestCase):
         self.assertRaises(binner.DataTypeError, self.bins.bin_sum, self.coords)
         self.assertRaises(binner.BinLimitError, self.bins.bin_sum, self.bad_data_A)
         self.assertRaises(binner.BinLimitError, self.bins.bin_sum, self.bad_data_B)
+
+    def test_numpyArray(self):
+        """Make sure numpy arrays work as promised."""
+        # Check correct result
+        binned_data = self.bins.bin_sum(numpy.array(self.data))
+        expected_result = [None,None,4,102,11,20,1.6,None,10]
+        self.assertEqual(binned_data.tolist(), expected_result)
+
+        # Check exceptions
+        self.assertRaises(binner.DataTypeError, self.bins.bin_sum, numpy.array(self.coords))
+        self.assertRaises(binner.BinLimitError, self.bins.bin_sum, numpy.array(self.bad_data_A))
+        self.assertRaises(binner.BinLimitError, self.bins.bin_sum, numpy.array(self.bad_data_B))
 
     def test_SumDivide(self):
         # Check correct result
