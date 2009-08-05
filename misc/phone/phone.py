@@ -15,66 +15,56 @@ events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/lcCalls_reve
 """
 
 import numpy
-from numpy import recarray
 from time import *
-import random
 
 class PhoneEvent(object):
-    defaultStartTime=mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
+    defaultStartTime = mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
 
-    def __init__(self,line=None,startTime=None,record=None,format="orig",originalIndex=None):
-        if startTime==None:
-            startTime=self.defaultStartTime
-        if line!=None:
-            self.parseEvent(line,startTime,format)
-            assert(originalIndex!=None)
-            self.originalIndex=originalIndex
-        if record!=None:
-            #maybe this data could be stored to record in this class also?
+    def __init__(self,line=None,startTime=None,record=None,
+                 format="orig",originalIndex=None):
+        startTime = (startTime or self.defaultStartTime)
+
+        if line != None:
+            self.parseEvent(line, startTime, format)
+            assert(originalIndex != None)
+            self.originalIndex = originalIndex
+
+        if record != None:
+            # Maybe this data could be stored to record in this class also?
             self.time = record['time']            
-            self.fr=record['fr']
-            self.to=record['to']
-            self.duration=record['duration']
-            self.call=record['call']
-            self.reversed=record['reversed']
-            self.originalIndex=record['originalIndex']
+            self.fr = record['fr']
+            self.to = record['to']
+            self.duration = record['duration']
+            self.call = record['call']
+            self.reversed = record['reversed']
+            self.originalIndex = record['originalIndex']
 
     def __eq__(self,other):
-        return self.originalIndex==other.originalIndex
+        return self.originalIndex == other.originalIndex
         #check only the original index
         #return self.fr==other.fr and self.to == other.to and self.time==other.time
     
     def parseEvent(self,line,startTime,format):
-        """
-        Input: A line in the event file.
-        Output: A tuple containing the parsed fields.
-        """
-        fields=line.split()
-        if format=="orig":
-            self.time = mktime(strptime(fields[0]+' '+fields[1], "%Y%m%d %H%M%S"))-startTime #Read event time
-            self.fr=int(fields[2])
-            self.to=int(fields[4])
-            self.duration=int(fields[5])
-            ctype=fields[3]
-            if ctype=="2":
-                self.call=True
-            else:
-                self.call=False
-            self.reversed=False
+        """Set properties according to a line from event file."""
+        fields = line.split()
 
+        if format == "orig":
+            # Read event time
+            self.time = mktime(strptime(fields[0]+' '+fields[1],
+                                        "%Y%m%d %H%M%S")) - startTime
+            self.fr = int(fields[2])
+            self.to = int(fields[4])
+            self.duration = int(fields[5])
+            self.call = (fields[3] == "2")
+            self.reversed = False
 
         elif format=="sec":
             self.time = int(fields[0])
-            self.fr=int(fields[1])
-            self.to=int(fields[3])
-            self.duration=int(fields[4])
-            ctype=fields[2]
-            if ctype=="2":
-                self.call=True
-            else:
-                self.call=False
-            self.reversed=False
-
+            self.fr = int(fields[1])
+            self.to = int(fields[3])
+            self.duration = int(fields[4])
+            self.call = (fields[2] == "2")
+            self.reversed = False
 
     def getReversed(self):
         newEvent=PhoneEvent()
@@ -88,12 +78,19 @@ class PhoneEvent(object):
         #These values are changed:
         newEvent.fr=self.to
         newEvent.to=self.fr
-        newEvent.reversed=(self.reversed==False)
+        newEvent.reversed = (not self.reversed)
     
         return newEvent
 
     def  __str__(self):
-        return reduce(lambda x,y:x+","+y,map(str,(self.time,self.fr,self.to,self.duration,int(self.call),int(self.reversed))))
+        # Reduce is slow and ugly. join is better.
+        #return reduce(lambda x,y:x+","+y,
+        #              map(str,
+        #                  (self.time,self.fr,self.to,self.duration,
+        #                   int(self.call),int(self.reversed))))
+        v = (self.time, self.fr, self.to, self.duration,
+             int(self.call), int(self.reversed))
+        return ", ".join(map(str, v))
         
 
     def __hash__(self):
@@ -101,18 +98,15 @@ class PhoneEvent(object):
         #return str(self).__hash__()
 
 class PhoneEvents(object):
-    """
-    A (virtual) class for handling and parsing events for the phone data.
-    """
-    def __init__(self,startTime=None,sortOrder=()):
-        if startTime==None: #use default
-            startTime=PhoneEvent.defaultStartTime
-        self.startTime=startTime
-        self.sortOrder=sortOrder
-        self.indexEvents=False
+    """A virtual class for handling and parsing phone events."""
+    
+    def __init__(self, startTime=None, sortOrder=()):
+        self.startTime = (startTime or PhoneEvent.defaultStartTime)
+        self.sortOrder = sortOrder
+        self.indexEvents = False
 
     def _userEvents(self,firstEvent,iterator,lastEventContainer):
-        thisUser=firstEvent.fr
+        #thisUser=firstEvent.fr
         yield firstEvent
         nextEvent=iterator.next()
         lastEventContainer[0]=nextEvent
@@ -123,18 +117,20 @@ class PhoneEvents(object):
         print lastEventContainer
 
     def getUsers_new(self):
-        if len(self.sortOrder)<1 or self.sortOrder[0]!="fr":
+
+        if len(self.sortOrder) < 1 or self.sortOrder[0] != "fr":
             raise Exception("Events are not properly sorted.")
-        thisUser=None
-        userEvents=[]
-        lastEventContainer=[None]
+        #thisUser = None
+        #userEvents = []
+        lastEventContainer = [None]
         try:
-            iterator=self.__iter__()
-            firstEvent=iterator.next()
+            iterator = self.__iter__()
+            firstEvent = iterator.next()
             yield self._userEvents(firstEvent,iterator,lastEventContainer)
             while True:
-                event=iterator.next()
-                yield self._userEvents(lastEventContainer[0],iterator,lastEventContainer)
+                event = iterator.next()
+                yield self._userEvents(lastEventContainer[0],
+                                       iterator, lastEventContainer)
         except StopIteration:
             pass
 
@@ -156,71 +152,98 @@ class PhoneEvents(object):
 
 
 
-    def getTriggeredEvents(self,delta,allowReturn=True):
-        if len(self.sortOrder)<2 or self.sortOrder[0]!="fr" or self.sortOrder[1]!="time":
+    def getTriggeredEvents(self, delta, allowReturn=True):
+        if ( len(self.sortOrder) < 2 or 
+             self.sortOrder[0] != "fr" or 
+             self.sortOrder[1] != "time" ):
             raise Exception("Events are not properly sorted.")
         for userEvents in self.getUsers():
             lastReversedEvent=None
             for event in userEvents:
                 if event.reversed:
                     lastReversedEvent=event
-                elif lastReversedEvent!=None and (event.time-lastReversedEvent.time-lastReversedEvent.duration)<delta:
+                elif ( lastReversedEvent != None and
+                       (event.time - lastReversedEvent.time -
+                        lastReversedEvent.duration) < delta ):
                     if allowReturn or event.to!=lastReversedEvent.to:
-                        yield (lastReversedEvent.getReversed(),event)
+                        yield (lastReversedEvent.getReversed(), event)
         #remove sms
 
 class PhoneEventsStatic(PhoneEvents):
     pass
 
 class PhoneEventsContainer(PhoneEvents):
-    """
-    A container for phone events. All events are kept in the memory for fast random access.
+    """A container for phone events.
+
+    All events are kept in the memory for fast random access.
     """
     
-    def __init__(self,inputfilename,numberOfEvents,numberOfUsers,reversed=False,startTime=None,verbose=True,format="orig",sortOrder=()):
-        #if startTime==None:
-        #    startTime=PhoneEvent.defaultStartTime
-        PhoneEvents.__init__(self,startTime=startTime,sortOrder=sortOrder)
-        self.numberOfUsers=numberOfUsers
-        self.reversed=reversed
-        if reversed:
-            self.numberOfEvents=numberOfEvents*2
-        else:
-            self.numberOfEvents=numberOfEvents
+    def __init__(self, inputFileName, numberOfEvents=None, numberOfUsers=None,
+                 reversed=False,startTime=None,verbose=True,format="orig",
+                 sortOrder=()):
 
-        self.iterateCalls=True
-        self.iterateSMS=True
+        # Initialize parent class. Note that if startTime is None,
+        # PhoneEvents uses the default start time (defined in
+        # PhoneEvents).
+        PhoneEvents.__init__(self, startTime = startTime, sortOrder=sortOrder)
+        self.numberOfUsers=numberOfUsers # Used nowhere? (LK 4.8.2008)
 
-        if format!="numpy":
+        self.reversed = reversed
 
-            inputfile=open(inputfilename,'r')
-            self.eventData=numpy.recarray(self.numberOfEvents,formats='uint32,uint32,uint32,uint16,bool,bool,uint32',names='fr,to,time,duration,call,reversed,originalIndex')
+        self.iterateCalls = True # What are
+        self.iterateSMS = True   #  these?
 
-            for lineNumber,line in enumerate(inputfile):
-                thisEvent=PhoneEvent(line,format=format,originalIndex=lineNumber)
+        if format != "numpy":
+            # The number of events must only be specified when the
+            # data is read from a text file. If a ready-saved
+            # numpy.recarray is used instead, the number of events can
+            # be read from it.
+            if not numberOfEvents:
+                raise Exception("Number of events must be "
+                                "specified with text data.")
+            if reversed:
+                self.numberOfEvents = numberOfEvents*2
+            else:
+                self.numberOfEvents = numberOfEvents
+
+            # Initialize record array for event data.
+            column_formats = 'uint32,uint32,uint32,uint16,bool,bool,uint32'
+            column_names = 'fr,to,time,duration,call,reversed,originalIndex'
+            self.eventData = numpy.recarray(self.numberOfEvents,
+                                            formats=column_formats,
+                                            names=column_names)
+
+            inputFile = open(inputFileName,'r')
+            for lineNumber, line in enumerate(inputFile):
+                thisEvent = PhoneEvent(line, format=format,
+                                       originalIndex=lineNumber)
                 if reversed:
-                    self._addEvent(thisEvent,lineNumber*2)
-                    self._addEvent(thisEvent.getReversed(),lineNumber*2+1)
+                    self._addEvent(thisEvent, lineNumber*2)
+                    self._addEvent(thisEvent.getReversed(), lineNumber*2+1)
                 else:
                     self._addEvent(thisEvent,lineNumber)
 
-                if verbose and lineNumber%1000000==0:
+                if verbose and lineNumber % 1000000 == 0:
                     print lineNumber
+            inputFile.close()
+
         else:
-            self.eventData=numpy.load(inputfilename)
+            # Read in a previously saved numpy.recarray object.
+            self.eventData = numpy.load(inputFileName)
+            self.numberOfEvents = len(self.eventData)
             
-    def _addEvent(self,event,eventIndex):
-            self.eventData['fr'][eventIndex]=event.fr
-            self.eventData['to'][eventIndex]=event.to
-            self.eventData['call'][eventIndex]=event.call
-            self.eventData['duration'][eventIndex]=event.duration
-            self.eventData['time'][eventIndex]=event.time
-            self.eventData['reversed'][eventIndex]=event.reversed
-            self.eventData['originalIndex'][eventIndex]=event.originalIndex
+    def _addEvent(self, event, eventIndex):
+            self.eventData['fr'][eventIndex] = event.fr
+            self.eventData['to'][eventIndex] = event.to
+            self.eventData['call'][eventIndex] = event.call
+            self.eventData['duration'][eventIndex] = event.duration
+            self.eventData['time'][eventIndex] = event.time
+            self.eventData['reversed'][eventIndex] = event.reversed
+            self.eventData['originalIndex'][eventIndex] = event.originalIndex
 
     def sort(self,field):
         self.eventData.sort(order=field)
-        if field.__class__==tuple:
+        if field.__class__ == tuple:
             self.sortOrder=field
         else:
             self.sortOrder=(field,)
@@ -229,10 +252,10 @@ class PhoneEventsContainer(PhoneEvents):
         if self.reversed:
             raise Exception("Can't shuffle reversed events.")
         numpy.random.shuffle(self.eventData)
-            
+
     def __iter__(self):
-        for index,eventRecord in enumerate(self.eventData):
-            event=PhoneEvent(record=eventRecord)
+        for index, eventRecord in enumerate(self.eventData):
+            event = PhoneEvent(record=eventRecord)
             if event.call:
                 if self.iterateCalls:
                     yield event
@@ -241,9 +264,24 @@ class PhoneEventsContainer(PhoneEvents):
                     yield event
 
     def saveData(self,filename):
-        numpy.save(filename,self.eventData)
+        numpy.save(filename, self.eventData)
 
     def __get__(self,index):
-        return PhoneEvent(record=self.eventData[index])
+        return PhoneEvent(record = self.eventData[index])
 
+    def shuffled_iter(self, field):
+        """Iterate shuffled data, keeping `field` ordered.
 
+        This is useful for example when the data is ordered by field
+        'time', and we want to shuffle the time stamps of the
+        events. Note that this function doesn't alter the ordering of
+        the data structure; it is only iterated in a shuffled order.
+        """
+        # Create shuffled ordering
+        rand_order = range(self.numberOfEvents)
+        numpy.random.shuffle(rand_order)
+        
+        for i, ri in enumerate(rand_order):
+            rand_record = self.eventData[ri].copy()
+            rand_record[field] = self.eventData[i][field]
+            yield PhoneEvent(record = rand_record)
