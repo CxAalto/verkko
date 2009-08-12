@@ -14,8 +14,10 @@ events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/lcCalls_reve
 
 """
 
+from sys import stdout
 import numpy
 from time import *
+from timing import Timer
 
 class PhoneEvent(object):
     defaultStartTime = mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
@@ -23,7 +25,7 @@ class PhoneEvent(object):
     def __init__(self,line=None,startTime=None,record=None,
                  format="orig",originalIndex=None):
         startTime = (startTime or self.defaultStartTime)
-
+        
         if line != None:
             self.parseEvent(line, startTime, format)
             assert(originalIndex != None)
@@ -119,9 +121,9 @@ class PhoneEvents(object):
     def getUsers_new(self):
 
         if len(self.sortOrder) < 1 or self.sortOrder[0] != "fr":
-            raise Exception("Events are not properly sorted.")
-        #thisUser = None
-        #userEvents = []
+            raise Exception("Events must be sorted by 'fr'.")
+        thisUser = None
+        userEvents = []
         lastEventContainer = [None]
         try:
             iterator = self.__iter__()
@@ -136,7 +138,7 @@ class PhoneEvents(object):
 
     def getUsers(self):
         if len(self.sortOrder)<1 or self.sortOrder[0]!="fr":
-            raise Exception("Events are not properly sorted.")
+            raise Exception("Events must be sorted by 'fr'.")
         thisUser=None
         userEvents=[]
         for event in self:
@@ -248,12 +250,34 @@ class PhoneEventsContainer(PhoneEvents):
         else:
             self.sortOrder=(field,)
 
-    def shuffle(self):
+    def shuffle(self, field=None):
+        """Shuffle either full data or one column.
+
+        This method works differently depending on whether an input
+        parameter `field` is given:
+           If `field` is not given or is None, the ordering of events
+           is randomized.
+
+           If `field` is given and it corresponds to one of the data
+           fields (for example 'time'), the ordering of `field` is
+           preserved while the data on other columns is shuffled. This
+           is useful if for instance the original events are already
+           sorted by time, and you want to shuffle the time stamps of
+           the events.
+        """
         if self.reversed:
             raise Exception("Can't shuffle reversed events.")
-        numpy.random.shuffle(self.eventData)
+        if field == None:
+            # Shuffle everything
+            numpy.random.shuffle(self.eventData)
+        else:
+            # Keep field in original order, shuffle everything else.
+            orig_col = self.eventData[field].copy()
+            numpy.random.shuffle(self.eventData)
+            self.eventData[field] = orig_col
+            
 
-    def __iter__(self):
+	def __iter__(self):
         for index, eventRecord in enumerate(self.eventData):
             event = PhoneEvent(record=eventRecord)
             if event.call:
@@ -266,22 +290,9 @@ class PhoneEventsContainer(PhoneEvents):
     def saveData(self,filename):
         numpy.save(filename, self.eventData)
 
-    def __get__(self,index):
+    def __getitem__(self,index):
         return PhoneEvent(record = self.eventData[index])
 
-    def shuffled_iter(self, field):
-        """Iterate shuffled data, keeping `field` ordered.
+    def __len__(self):
+        return len(self.eventData)
 
-        This is useful for example when the data is ordered by field
-        'time', and we want to shuffle the time stamps of the
-        events. Note that this function doesn't alter the ordering of
-        the data structure; it is only iterated in a shuffled order.
-        """
-        # Create shuffled ordering
-        rand_order = range(self.numberOfEvents)
-        numpy.random.shuffle(rand_order)
-        
-        for i, ri in enumerate(rand_order):
-            rand_record = self.eventData[ri].copy()
-            rand_record[field] = self.eventData[i][field]
-            yield PhoneEvent(record = rand_record)
