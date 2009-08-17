@@ -3,32 +3,88 @@ from math import sqrt, floor, ceil
 import operator
 import sys
 import numpy as np
+from random import sample
+from timing import Timer
+from collections import deque
 
-def read_columns(filename, header_rows, types, columns = None, sep=None):
-    """Read columns of a file into lists
+class __field_converter(object):
+    """Class for converting fields to given types."""
 
-    Read the columns in file into lists, ignoring headers, and
-    converting the values in column i to type types[i]. By default the
-    len(types) first columns are read, if other columns are desired
-    they must be specified explisitely with the argument
-    'columns'. Note that the first column is 0. Filename can be either
-    a string or a file object.
+    def __init__(self, types, cols=None):
+        # If columns are not specified use the first columns.
+        if cols == None:
+            cols = range(len(types))
 
-    Parameters
+        # Column number must match type number.
+        if len(cols) != len(types):
+            raise Exception, "Number of types does not match the number of columns."
+
+        self.types = types
+        self.cols = cols
+
+    def __call__(self, fields):
+        ret_val = []
+        try:
+            for i, col in enumerate(self.cols):
+                ret_val.append(self.types[i](fields[col]))
+        except ValueError:
+            raise ValueError("Unable to convert '%s' to %s in column %d"
+                             % (fields[col], str(self.types[i]), col))
+        except IndexError:
+            raise IndexError("Column %d not found." % (col,))
+        return ret_val
+
+
+def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
+    """Read columns of a file into lists.
+
+    Read the columns in file `filename` into lists, ignoring the first
+    `skip_rows` lines. This function has two different calling
+    signatures, both of which have identical output. The first version
+    simply converts each column to a given type, while the second
+    allows specifying a function that is used to extract the column
+    information from each line.
+
+    The first call signature is
+      read_columns(filename, skip_rows, types, columns=None, sep=None)
+    This converts the values in column i to type `types[i]`. By
+    default the len(types) first columns are read, if other columns
+    are desired they must be specified explisitely with the argument
+    'columns'. Note that the first column is 0.
+
+    Parameters (whit column types)
     ----------
-    filename : string or a file object
-        The input file to read. Note that if a file object is given,
-        the caller is responsible for closing the file.
-    header_rows : int
+    filename : str
+        The input file to read.
+    skip_rows : int
         The number of header rows in the files to skip before the
         actual data begins.
-    types : tuple of type objects
+    types : sequence of type objects
         The types of the columns to be read.
     columns : sequence (with same length as types)
         The columns that are to be read, the first column being 0. If
         None, the first len(types) columns will be read.
     sep : string
         The column separator, defaults to any whitespace.
+
+    
+    The second call signature is
+      read_columns(filename, skip_rows, fun)
+    This version calls the function `fun` for the fields on each line
+    to obtain information of columns
+
+    Parameters (with conversion function)
+    ----------
+    filename : str
+        The input file to read.
+    skip_rows : int
+        The number of header rows in the files to skip before the
+        actual data begins.
+    fun : function
+        Function for processing a single line. fun takes in a list of
+        strings (values in each column) and outputs the processed data
+        as a sequence. The n:th list in the output of process_columns
+        will consist of the n:th elements of the outputs of fun.
 
     Return
     ------
@@ -48,76 +104,45 @@ def read_columns(filename, header_rows, types, columns = None, sep=None):
 
     >>> # Read columns 1 and 4 of input.txt and convert them to type
     >>> # int and float, respectively. Skip the two header rows.
-    >>> inputFile = open('input.txt')
-    >>> col1, col4 = read_columns(inputFile, 2, (int, float), (1,4))
-    >>> inputFile.close()
+    >>> col1, col4 = read_columns('input.txt', 2, (int, float), (1,4))
 
     >>> # Read only the second column. Note the use of tuples!
     >>> col1, = read_columns('input.txt', 2, (int,), (1,))
 
-    
+    >>> # Sum columns 0 and 2, multiply columns 1 and 3.
+    >>> # Exclude the two first rows (headers).
+    >>> def myFun(cols):
+    ...     fields = map(int, cols)
+    ...     return fields[0]+fields[2], fields[1]*fields[3]
+    ...
+    >>> sum02, mult13 = read_columns('input.txt', 2, myFun)
     """
-    # If columns are not specified use the first columns.
-    if columns == None:
-        columns = range(len(types))
+    # Initialize data generator.
+    data_gen = gen_columns(filename, skip_rows, typesORfun, columns, sep)
 
-    # Column number must match type number.
-    if len(columns) != len(types):
-        raise Exception, "Number of types does not match the number of columns."
+    # Get first columns to find out the number of colums.
+    first_cols = data_gen.next()
 
-    # Open file
-    if isinstance(filename, str):
-        try:
-            f = open(filename, 'rU')
-        except IOError:
-            raise
-    elif isinstance(filename, file):
-        f = filename
+    # Read the remaining columns.
+    data = [[x] for x in first_cols]
+    for cols in data_gen:
+        for i, c in enumerate(cols):
+            data[i].append(c)
 
-    # Read through headers        
-    for i in range(header_rows):
-        f.next()
-        
-    data = [[] for i in range(len(columns))]
-    converted_fields = [0 for i in range(len(columns))]
-
-    for line_number, line in enumerate(f):
-        fields = line.split(sep)
-        i, col = 0, 0
-        try:
-            for i, col in enumerate(columns):
-                converted_fields[i] = types[i](fields[col])
-        except ValueError:
-            raise ValueError("Line %d, column %d: "
-                             "Unable to convert '%s' to %s." % 
-                             (line_number+header_rows+1,col,fields[col],
-                              str(types[i])))
-        except IndexError:
-            raise IndexError("Line %d: Column %d not found." 
-                             % (line_number+header_rows+1, col))
-
-        # Line read successfully, add to data.
-        for i in range(len(columns)):
-            data[i].append(converted_fields[i])
-
-    if isinstance(filename, str):
-        f.close()
-        
     return data
 
 
-
-def gen_columns(filename, header_rows, types, columns = None, sep=None):
-    """Generate column data from a file
+def gen_columns(filename, skip_rows, typesORfun, columns = None, sep=None):
+    """Generate column data from a file.
 
     This function works exactly as read_columns, but instead of
     reading the whole file and returning the columns as lists, this
-    functions is a generator and at each iteration yields a tuple with
-    the values of each column.
+    function yields a type a tuple with the values of each column on
+    each iteration.
 
-    This function is especially handy when used with the Bins class
-    for binning data straight from a file, because Bins can take a
-    generator as input data.
+    This function is especially handy when used with the binner.Bins
+    class for binning data straight from a file, because Bins can take
+    a generator as input data.
 
     Parameters
     ----------
@@ -139,130 +164,50 @@ def gen_columns(filename, header_rows, types, columns = None, sep=None):
             print values
 
     >>> # Print the values in second and fifth columns.
-    >>> inputFile = open('input.txt')
-    >>> for (col1, col4) in gen_columns(inputFile, 2, (int, float), (1,4)):
+    >>> for (col1, col4) in gen_columns('input.txt', 2, (int, float), (1,4)):
             print '%d: %d' % (col1, col4) 
-    >>> inputFile.close()
-    
     """
-    # If columns are not specified use the first columns.
-    if columns == None:
-        columns = range(len(types))
-
-    # Column number must match type number.
-    if len(columns) != len(types):
-        raise Exception, "Number of types does not match the number of columns."
-
-    # Open file
-    if isinstance(filename, str):
-        try:
-            f = open(filename, 'rU')
-        except IOError:
-            raise
-    elif isinstance(filename, file):
-        f = filename
-
-    # Read through headers
-    for i in range(header_rows):
-        f.next()
-        
-    for line_number, line in enumerate(f):
-        converted_fields = []
-        fields = line.split(sep)
-        i, col = 0, 0
-        try:
-            for i, col in enumerate(columns):
-                converted_fields.append( types[i](fields[col]) )
-        except ValueError:
-            raise ValueError("Line %d, column %d: "
-                             "Unable to convert '%s' to %s." % 
-                             (line_number+header_rows+1,col,fields[col],
-                              str(types[i])))
-        except IndexError:
-            raise IndexError("Line %d: Column %d not found." 
-                             % (line_number+header_rows+1, col))
-
-        # Line read successfully, give output.
-        yield tuple(converted_fields)
-
-    # Close file if filename is a string.
-    if isinstance(filename, str):
-        f.close()
-        
-
-def process_columns(filename, header_rows, fun):
-    """Read columns of a file by filtering lines with fun.
-
-    Read the columns in file into lists, ignoring headers, and process
-    the values in each row with fun. The return values of fun are
-    collected into lists. Filename can be either a string or a file
-    object.
-
-    Parameters
-    ----------
-    filename : string or a file object
-        The input file to read. Note that if a file object is given,
-        the caller is responsible for closing the file.
-    header_rows : int
-        The number of header rows in the files to skip before the
-        actual data begins.
-    fun : function
-        Function for processing a single line. fun takes in a list of
-        strings (values in each column) and outputs the processed
-        data. The n:th list in the output of process_columns will
-        consist of the n:th elements of the outputs of fun.
-
-    Return
-    ------
-    data : tuple of lists
-        The n:th list contains all n:th return values of fun.
-
-    Examples
-    --------
-    >>> # Sum columns 0 and 2, multiply columns 1 and 3.
-    >>> # Exclude the two first rows (headers).
-    >>> def myFun(cols):
-    ...     fields = map(int, cols)
-    ...     return fields[0]+fields[2], fields[1]*fields[3]
-    ...
-    >>> sum02, mult13 = process_columns('input.txt', 2, myFun)
-
-    """
-
-    # Open file
-    if isinstance(filename, str):
-        try:
-            f = open(filename, 'rU')
-        except IOError:
-            raise
-    elif isinstance(filename, file):
-        f = filename
-
-    # Read through headers        
-    for i in range(header_rows):
+    # Open file and read through headers. If `filename` does not
+    # exist, IOError will be raised.
+    f = open(filename, 'rU')
+    for i in range(skip_rows):
         f.next()
 
-    # Read first line to find out the return type of fun.
-    fun_output = fun(f.next().split())
-    wrapper = lambda x: (x,)
-    output_len = 1
-    if isinstance(fun_output, (tuple, list)):
-        wrapper = lambda x: x
-        output_len = len(fun_output)
+    if hasattr(typesORfun, '__getitem__'):
+        # `typesORfun` argument is a sequence of types. Create a
+        # callable class for conversions.
+        fun = __field_converter(typesORfun, columns)
+    elif hasattr(typesORfun, '__call__'):
+        # `typesORfun` is a function (or a callable class).
+        fun = typesORfun
+    else:
+        raise ValueError("Unidentified input values.")
 
-    # Add the first read line.
-    data = [[x] for x in wrapper(fun_output)]
-    
-    for line_number, line in enumerate(f):
-        data_out = wrapper(fun(line.split()))
-        for i in range(output_len):
-            data[i].append(data_out[i])
+    for line_no, line in enumerate(f):
+        try:
+            fun_output = fun(line.split())
+        except ValueError as er:
+            # Append line number to exception message.
+            raise ValueError("Line %d: %s" % (line_no+skip_rows+1, str(er)))
+        except IndexError as er:
+            # Append line number to exception message.
+            raise IndexError("Line %d: %s" % (line_no+skip_rows+1, str(er)))
 
-    if isinstance(filename, str):
-        f.close()
+        if fun_output == None:
+            continue
+
+        # Convert to tuple.
+        try:
+            fun_output = tuple(fun_output)
+        except TypeError as er:
+            raise TypeError("'fun' must return a sequence, got %s" % str(type(fun_output)))
+
+        # Line read successfully, yield data.
+        yield fun_output
+
+    # Close the input file.
+    f.close()
         
-    return data
-
 
 def percentile(data, p):
     """Calculate the p-percentile of data
@@ -364,6 +309,70 @@ def cumulative_dist(data, prob=None, format='descending'):
         cum_prob = [1] + cum_prob[:-1]
 
     return (list(data), list(cum_prob))
+
+def randomized_column_gen(dataFile, col, data_type=np.int32, verbose=False):
+    """Randomize a single column in a file.
+
+    NOTE! THIS METHOD IS CURRENTLY NOT TESTED, AND MIGHT NOT WORK.
+    (LK 17.8.2009)
+
+    Parameters
+    ----------
+    dataFile : file object
+        The input file
+    col : int
+        The column to be randomized. First column is 0.
+    data_type : numpy data-type, optional
+        The type to convert the column data to. The default behaviour
+        is to store each element as float.
+
+    Yield
+    -----
+    line_gen : generator
+        A generator that gives one properly randomized line on each
+        iteration. The text in column `col` will always stay on its
+        original row, while the whole of all other columns is
+        randomized.
+    """
+
+    def rand_line_gen(lines, col):
+        """Iterate through randomized lines."""
+
+        # Create random ordering for columns
+        if verbose:
+            tmr = Timer("< Randomizing column order ... >")
+        rand_order = sample(xrange(len(lines)), len(lines))
+        if verbose:
+            tmr.stop("< ... done (%s). >")
+        for i, line in zip(rand_order, lines):
+            col_data = line[col]
+            col_fields = list(lines[i])
+            fields = col_fields[:col] + [col_data] + col_fields[col+1:]
+            yield fields
+
+    dt = np.dtype(data_type).type
+
+
+    # Read in the data into a list, then convert the list into a numpy
+    # array in a single step.
+    if verbose:
+        tmr = timer("< Starting to read data ... >")
+    raw_lines = []
+    for i, line in enumerate(dataFile):
+        if verbose and not (i % 100000):
+            print "%d: (%s)" % (i, str(tmr))
+            tmr.reset()
+        raw_lines.append(map(int, line.split()))
+    if verbose:
+        tmr.stop("< ... done (%s). Creating a numpy array ... >")
+    lines = np.array(raw_lines, dtype=dt)
+    if verbose:
+        tmp.stop("< ... done (%s). >")
+    del raw_lines
+
+    # On each iteration, return a new random line generator.
+    while True:
+        yield rand_line_gen(lines, col)
 
 
 if __name__ == '__main__':
