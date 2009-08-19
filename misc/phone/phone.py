@@ -17,7 +17,6 @@ events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/lcCalls_reve
 from sys import stdout
 import numpy
 from time import *
-from timing import Timer
 
 class PhoneEvent(object):
     defaultStartTime = mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
@@ -277,7 +276,7 @@ class PhoneEventsContainer(PhoneEvents):
             self.eventData[field] = orig_col
             
 
-	def __iter__(self):
+    def __iter__(self):
         for index, eventRecord in enumerate(self.eventData):
             event = PhoneEvent(record=eventRecord)
             if event.call:
