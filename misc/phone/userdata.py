@@ -52,8 +52,9 @@ ZIP 40297 is valid!
 ...     if (user['gender'] and user['usertype'] and not user['invalidZIP']):
 ...         N_valid_users += 1
 ...
->>> N_valid_users
-4162538
+>>> print "Only %d valid users out of %d!" % (N_valid_users, len(udata))
+Only 4162538 valid users out of 5343749!
+
 """
 
 import os
