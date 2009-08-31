@@ -33,9 +33,9 @@ False
 >>> udata[1127]['usertype'] == UserData.postpaid
 True
 >>> udata[1127]['usertype'] == UserData.prepaid
-True
+False
 >>> udata[1127]['usertype'] == UserData.unknown
-True
+False
 
 >>> # Test if ZIP code is valid (see `help UserData` for condition of
 >>> # validity). Note also that ZIP is saved as integer; use
