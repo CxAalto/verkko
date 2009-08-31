@@ -1,7 +1,59 @@
 """
 Module for analysing mobile phone network metadata.
 
-Loading events:
+Usage:
+
+>>> # Read user data either from a text file or from a previously
+>>> # saved npy-file. Reading from npy-file is _much_ faster!
+>>> from phone.userdata import UserData
+>>> udata = UserData('userdata.txt')
+>>> udata.save('userdata.npy')
+>>> del udata
+>>> udata = UserData('userdata.npy')
+
+>>> # Take a look at the data of a single user.
+>>> udata[1127]
+(52, 1, 40297L, False, 2)
+>>> # The previous line means that user 1127 is 52 year old female
+>>> # (the second '1'), with valid ZIP 40297 (invalidZIP = False), and
+>>> # is a postpaid user (the last '2').
+
+>>> # User data should be compared to internal constants. For example,
+>>> # 'gender' is one of UserData.female, UserData.male or
+>>> # UserData.unknown:
+>>> udata[1127]['gender'] == UserData.female
+True
+>>> udata[1127]['gender'] == UserData.male
+False
+>>> udata[1127]['gender'] == UserData.unknown
+False
+
+>>> # 'usertype' is one of UserData.postpaid, UserData.prepaid or
+>>> # UserData.unknown:
+>>> udata[1127]['usertype'] == UserData.postpaid
+True
+>>> udata[1127]['usertype'] == UserData.prepaid
+True
+>>> udata[1127]['usertype'] == UserData.unknown
+True
+
+>>> # Test if ZIP code is valid (see `help UserData` for condition of
+>>> # validity). Note also that ZIP is saved as integer; use
+>>> # formatting '%05d' to print it properly.
+>>> if not udata[1127]['invalidZIP']:
+...     print "ZIP %05d is valid!" % udata[1127]['ZIP']
+...
+ZIP 40297 is valid!
+
+>>> # Type UserData.unknown evaluates to False. Therefore it is
+>>> # possible to go through valid users like this:
+>>> N_valid_users = 0
+>>> for user in udata:
+...     if (user['gender'] and user['usertype'] and not user['invalidZIP']):
+...         N_valid_users += 1
+...
+>>> N_valid_users
+4162538
 """
 
 import os
@@ -12,25 +64,24 @@ class UserData(np.recarray):
 
     Note that differently from the original data file, missing,
     invalid and erroneous values are always marked with 0. This allows
-    natural tests like `if gender` or `if userType`. The following
-    fields exist for each user:
+    natural tests like `if gender` or `if usertype`. The following
+    five fields exist for each user:
 
-    age: The age of the user in years. Missing or invalid value is
-         indicated with 0.
+    age         The age of the user in years. Missing or invalid value
+                is indicated with 0.
 
-    gender: 0 = Unknown, 1 = Female, 2 = Male. Gender will be marked
-            as unknown for non-postpaid users if in the original data
-            gender is male and either 
-              1) ZIP is '99999' or 
-              2) age is '0'.
+    gender      0 = Unknown, 1 = Female, 2 = Male. Gender will be
+                marked as unknown for non-postpaid users if in the
+                original data gender is male and either 1) ZIP is
+                '99999' or 2) age is '0'.
 
-    ZIP: The ZIP code of the user, missing value is 99999. Note that
-         the ZIP code is saved as integer for performance
-         reasons. Because ZIP codes always have exactly 5 digits, you
-         need to zero-pad the integer to get the original ZIP code,
-         i.e. `ZIP_string = "%05d" % ZIP`
+    ZIP         The ZIP code of the user, missing value is 99999. Note
+                that the ZIP code is saved as integer for performance
+                reasons. Because ZIP codes always have exactly 5
+                digits, you need to zero-pad the integer to get the
+                original ZIP code, i.e. `ZIP_string = "%05d" % ZIP`
 
-    invalidZIP: True if ZIP code is clearly invalid. This happens if
+    invalidZIP  True if ZIP code is clearly invalid. This happens if
                 1) The ZIP in the original data is '99999'.
                 2) The ZIP in the original data contains letters 
                    (e.g. '34OO1').
@@ -42,17 +93,17 @@ class UserData(np.recarray):
                 invalidZIP is False; however, it is always invalid if
                 invalidZIP is True.
                 
-    userType : 0 = unknown, 1 = prepaid, 2 = postpaid. If a line in
-               the original file contains only 4 columns, userType
-               will be unknown.
+    usertype    0 = unknown, 1 = prepaid, 2 = postpaid. If a line in
+                the original file contains only 4 columns, usertype
+                will be unknown.
 
     Usage:
-    >>> from userdata import UserData
+    >>> from phone.userdata import UserData
     >>> ud = UserData('userData_mutual.txt')
     >>> userID = 1127
-    >>> print ud[userID].age, ud[userID].gender
+    >>> print ud[userID]['age'], ud[userID]['gender']
     52 1
-    >>> print ud[userID].ZIP, ud[userID].userType
+    >>> print ud[userID]['ZIP'], ud[userID]['usertype']
     40297 0
     >>>
     >>> ud.save('userData_mutual.npy')
@@ -70,7 +121,7 @@ class UserData(np.recarray):
     __invalid_ZIP_in_data = "99999"
     __invalid_age_in_data = 0
     __invalid_gender_in_data = 0
-    __userType_map = {'0': postpaid, '1': prepaid}
+    __usertype_map = {'0': postpaid, '1': prepaid}
 
     def __initFromASCII(self, fileName):
         """Read user data from ASCII file.
@@ -92,14 +143,14 @@ class UserData(np.recarray):
                 age = min(UserData.max_age, max(int(fields[1]), 0))
 
                 if len(fields) < 5:
-                    userType = UserData.unknown
+                    usertype = UserData.unknown
                 else:
-                    userType = UserData.__userType_map.get(fields[4],
+                    usertype = UserData.__usertype_map.get(fields[4],
                                                            UserData.unknown)
 
                 gender = int(fields[2])
                 if (gender == UserData.male and 
-                    userType is not UserData.postpaid and 
+                    usertype is not UserData.postpaid and 
                     (age == UserData.__invalid_age_in_data or 
                      fields[3] == UserData.__invalid_ZIP_in_data)):
                     gender = UserData.unknown
@@ -119,7 +170,7 @@ class UserData(np.recarray):
                 self[userID]['gender'] = gender
                 self[userID]['ZIP'] = ZIP_code
                 self[userID]['invalidZIP'] = invalidZIP
-                self[userID]['userType'] = userType
+                self[userID]['usertype'] = usertype
                       
     def __new__(cls, fileName, N_users=None):
         """Initialize user data from file.
@@ -146,7 +197,7 @@ class UserData(np.recarray):
                 #print "Found %d lines." % N_users # DEBUG
             # Construct the object.
             dtype = [('age', np.uint8), ('gender', np.uint8), ('ZIP', np.uint32), 
-                     ('invalidZIP', bool), ('userType', np.uint8)]
+                     ('invalidZIP', bool), ('usertype', np.uint8)]
             obj = super(UserData, cls).__new__(cls, N_users, dtype=dtype)
             # Read in the data into the object.
             obj.__initFromASCII(fileName)
