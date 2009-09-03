@@ -494,7 +494,7 @@ class _BinLimits(tuple):
         if self.dataType == int:
             for i in range(len(self)-2):
                 bin_centers[i] = 0.5*(ceil(self[i+1])-1+ceil(self[i]))
-            bin_centers[-1] = 0.5*(ceil(self[-1])+ceil(self[-2]))
+            bin_centers[-1] = 0.5*(floor(self[-1])+ceil(self[-2]))
         else:
             for i in range(len(self)-1):
                 bin_centers[i] = 0.5*(self[i+1]+self[i])
@@ -506,7 +506,7 @@ class _BinLimits(tuple):
             bin_widths = np.zeros(len(self)-1, int)
             for i in range(len(self)-2):
                 bin_widths[i] = ( ceil(self[i+1]) - ceil(self[i]) )
-            bin_widths[-1] = ( ceil(self[-1]) + 1 - ceil(self[-2]) )
+            bin_widths[-1] = ( floor(self[-1]) + 1 - ceil(self[-2]) )
         else:
             bin_widths = np.zeros(len(self)-1, float)
             for i in range(len(self)-1):
