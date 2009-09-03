@@ -14,6 +14,7 @@
 from math import ceil, floor, sqrt
 from operator import itemgetter
 import numpy as np
+import data_utils
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -32,21 +33,34 @@ class DataTypeError(Error):
     pass
         
 def normalize(x):
-    """Normalize a sequence
+    """Normalize a sequence.
 
     Returns the sequence where each element is divided by the sum of
-    all elements.
+    all elements. The return type is the same as type of
+    `x`. Guaranteed to work with tuples, lists, numpy arrays and
+    numpy.ma masked arrays; other types may also work but have not
+    been tested.
     """
-    return list(np.array(x,float)/sum(x))
+    if hasattr(x, 'sum'):
+        x_sum = x.sum()
+    else:
+        x_sum = sum(x)
+    x_sum = float(x_sum)
+
+    if isinstance(x, (tuple, list)):
+        return type(x)(np.array(x,float)/x_sum)
+    else:
+        return x/float(x_sum)
 
 class _binFinder(object):
     """
     Find the correct bin for a given value by searching through all
     bins with binary search. The correct bin is bin i with
-    bin_limits[i] <= value < bin_limits[i+1].
+    bin_limits[i] <= value < bin_limits[i+1], except for the last bin,
+    for which the right edge is also included.
 
     If value < bin_limits[0], the returned bin index is negative, and
-    if value >= bin_limits[-1], the returned bin index is greater than
+    if value > bin_limits[-1], the returned bin index is greater than
     len(bins)-2.
 
     Finding the correct bin takes log(N) time. If it is possible to
@@ -70,6 +84,8 @@ class _binFinder(object):
     """
 
     def __init__(self, bin_limits):
+        self.right_edge = bin_limits[-1]
+        self.last_bin = len(bin_limits)-2
         # Add auxilary bins to front and back. This way we can return
         # -1 if the value is below the true first bin limit and N if
         # the value is beyond the actual last bin.
@@ -77,6 +93,9 @@ class _binFinder(object):
                             [bin_limits[-1]+1] )
 
     def __call__(self, value):
+        if value == self.right_edge:
+            return self.last_bin
+        
         lo, hi = 0, len(self.bin_limits)-1
         while (lo < hi - 1):
             mid = (lo+hi)/2
@@ -95,13 +114,16 @@ class _linBinFinder(_binFinder):
     Return the correct bin for a given value with linear bins.
 
     If value < bin_limits[0], the returned index is negative, and if
-    value >= bin_limits[-1], the returned index is > len(bins)-2.
+    value > bin_limits[-1], the returned index is > len(bins)-2.
 
     Parameters
     ----------
     bin_limits : sequence
         The limits of the bins used in binning. If there are N bins,
         len(bin_limits) is N+1.
+    include_right_edge : bool
+        If true, the right edge of the last bin will be included in
+        the last bin.
     value : integer or float
         The value for which the correct bin should be located.
 
@@ -112,23 +134,27 @@ class _linBinFinder(_binFinder):
     """
 
     def __init__(self, bin_limits):
-        self.minLimit = bin_limits[0]
-        self.diff = float(bin_limits[-1] - self.minLimit)/(len(bin_limits) - 1)
+        self.right_edge = bin_limits[-1]
+        self.last_bin = len(bin_limits)-2
+        self.left_edge = bin_limits[0]
+        self.diff = float(bin_limits[-1] - self.left_edge)/(len(bin_limits) - 1)
         #print "lin self.diff:", repr(self.diff)
         
     def __call__(self, value):
-        #print "0:", repr(value), repr(self.minLimit)
-        #print "1:", repr(value - self.minLimit)
-        #print "2:", repr((value - self.minLimit)/self.diff)
-        #print "3:", repr(floor( (value - self.minLimit)/self.diff ))
-        return int(floor((value - self.minLimit)/self.diff))
+        if value == self.right_edge:
+            return self.last_bin
+        #print "0:", repr(value), repr(self.left_edge)
+        #print "1:", repr(value - self.left_edge)
+        #print "2:", repr((value - self.left_edge)/self.diff)
+        #print "3:", repr(floor( (value - self.left_edge)/self.diff ))
+        return int(floor((value - self.left_edge)/self.diff))
     
 class _logBinFinder(_binFinder):
     """
     Return the correct bin for a given value with logarithmic bins.
 
     If value < bin_limits[0], the returned index is negative, and if
-    value >= bin_limits[-1], the returned index is greater than
+    value > bin_limits[-1], the returned index is greater than
     len(bin_limits)-2.
 
     Parameters
@@ -150,14 +176,20 @@ class _logBinFinder(_binFinder):
         # bin_limits and values. However, that simple implementation
         # doesn't work because of floating point inaccuracies; with
         # floats there are cases when log(a)-log(b) != log(a/b).
-        self.minLimit = bin_limits[0]
+
+        self.right_edge = bin_limits[-1]
+        self.last_bin = len(bin_limits)-2
+
+        self.left_edge = bin_limits[0]
         self.N_bins = len(bin_limits)-1
         self.ratio = np.log2(float(bin_limits[-1])/bin_limits[0])
         #print "log2 self.ratio:", repr(self.ratio)
         
     def __call__(self, value):
+        if value == self.right_edge:
+            return self.last_bin
         try:
-            return int(floor(self.N_bins * np.log2(float(value)/self.minLimit)
+            return int(floor(self.N_bins * np.log2(float(value)/self.left_edge)
                              / self.ratio ))
         except (OverflowError, ValueError):
             # value = 0 gives OverflowError, negative values give
@@ -168,7 +200,7 @@ class _logBinFinder(_binFinder):
 class _linlogBinFinder(_binFinder):
     """
     Return the correct bin for a given value with linear-logarithmic
-    bins: linear bins from minLimit to 10.5, and logarithmic bins from
+    bins: linear bins from left edge to 11, and logarithmic bins from
     thereon.
 
     Parameters
@@ -186,7 +218,7 @@ class _linlogBinFinder(_binFinder):
     """
 
     def __init__(self, bin_limits):
-        self.bin_limit = np.min(10.5, bin_limits[-1])
+        self.bin_limit = np.min(11, bin_limits[-1])
         self.N_lin_bins = int(self.bin_limit - bin_limits[0])
         # Create linear binner if linear bins exist.
         if self.N_lin_bins > 0:
@@ -194,7 +226,7 @@ class _linlogBinFinder(_binFinder):
         else:
             self.lin_bf = None
         # Create logarithmic binner if logarithmic bins exist.
-        if bin_limits[-1] > 10.5:
+        if bin_limits[-1] > 11:
             self.log_bf = _logBinFinder(bin_limits[self.N_lin_bins:])
         else:
             self.log_bf = None
@@ -202,9 +234,11 @@ class _linlogBinFinder(_binFinder):
     def __call__(self, value):
         if value < self.bin_limit:
             return self.lin_bf(value)
-        else:
+        elif self.log_bf:
             return self.N_lin_bins + self.log_bf(value)
-
+        else:
+            return self.N_lin_bins
+            
 class _BinLimits(tuple):
     """Class that represents the bin limits.
 
@@ -213,14 +247,20 @@ class _BinLimits(tuple):
     """
 
     @classmethod
-    def __generateLinbins(cls, minValue, maxValue, N_bins):
-        """Generate linear bins.
+    def __generateLinearStart(cls, minValue, maxValue):
+        """Generate the linear start for linlog bins."""
+        return range(max(1, int(minValue)), min(12, int(maxValue)+2))
 
-        The first bin is centered around self.minValue and the last bin is
-        centered around self.maxValue.
+    @classmethod
+    def __generateLinbins(cls, left_edge, right_edge, N_bins):
+        """Generate linear bins.
 
         Parameters
         ----------
+        left_edge: int or float
+            The left edge of the first bin
+        right_edge: int or float
+            The right edge of the last bin
         N_bins : integer
             Number of bins to generate
 
@@ -229,34 +269,29 @@ class _BinLimits(tuple):
         limit_seq : list
             The bin limits. len(limit_seq) = N_bins + 1
         """
-
-        binwidth = (maxValue-minValue)/float(N_bins-1)
-        bins = [minValue-binwidth/2.0]
-        currvalue = bins[0]
-
-        while currvalue < maxValue:
-            currvalue=currvalue+binwidth
-            bins.append(currvalue)
-
-        return bins
+        return list(np.linspace(left_edge, right_edge, N_bins+1))
 
     @classmethod
-    def __generateLogbins(cls, minValue, maxValue, factor, uselinear=True):
+    def __generateLogbins(cls, left_edge, right_edge, factor, uselinear=True):
         """Generate logarithmic bins.
 
         The upper bound of each bin is created by multiplying the
         lower bound with factor. The lower bound of the first bin
-        chosen so that minValue is the mid point of the first
-        bin. Bins are created until maxValue fits into the last
+        chosen so that left_edge is the mid point of the first
+        bin. Bins are created until right_edge fits into the last
         bin.
 
         Parameters
         ----------
+        left_edge: int or float (int if useLinear=True)
+            The left edge of the first bin.
+        right_edge: int or float (int if useLinear=True)
+            The largest value that must fit into the last bin.
         factor : float
             The factor for increasing bin limits.
         uselinear : boolean (True)
             If True, linear bins will be used between
-            min(1, minValue) and max(10, maxValue). Each
+            min(1, left_edge) and max(10, right_edge). Each
             linear bin will include one integer.
 
         Return
@@ -266,33 +301,30 @@ class _BinLimits(tuple):
         """
 
         if uselinear:
-            bins = [i-0.5 for i in range(max(0, int(minValue)),
-                                         min(12, int(maxValue)+2))]
-            i = len(bins)
+            bins = cls.__generateLinearStart(left_edge, right_edge)
         else:
-            bins=[ minValue*2.0/(1+factor) ]
-            i=1
+            bins = [left_edge]
 
-        while bins[i-1] <= maxValue:
+        i = len(bins)
+        while bins[i-1] < right_edge:
             bins.append(bins[i-1]*factor)
             i+=1
 
         return bins
 
     @classmethod
-    def __generateMaxLogbins(cls, minValue, maxValue, diff = 0.01):
+    def __generateMaxLogbins(cls, left_edge, right_edge):
         """Generate as many logarithmic bins as possible.
 
-        Construct logarthmic bins from minValue to maxValue
-        so that each bin contains at least one integer. The first bin
-        will start at (minValue-diff) and the last bin will end at
-        (maxValue+diff).
+        Construct logarthmic bins from left_edge to right_edge
+        so that each bin contains at least one integer.
         
         Parameters
         ----------
-        diff : float (0.01)
-            Extra space between minimum and maximum value. A smaller
-            value for diff gives a larger number of bins.
+        left_edge: int
+            The left edge of the first bin.
+        right_edge: int
+            The right edge of the last bin.
 
         Return
         ------
@@ -301,43 +333,45 @@ class _BinLimits(tuple):
 
         Notes
         -----
-        The number of bins grows quickly when minValue is increased
+        The number of bins grows quickly when left_edge is increased
         beyond 1. It is a good idea to check that the resulting bins
         are still suitable for your purpose.
         """
         # Initial values
-        if minValue > maxValue:
+        if left_edge > right_edge:
             return []
-        a = minValue - diff
-        b = maxValue + diff
-        max_bins = maxValue - minValue + 1
+        max_bins = right_edge - left_edge + 1
         if max_bins == 1:
-            return [a, b]
+            return [left_edge, right_edge]
 
         # Find the integer that diffs factor size.
         i, factor = 1, 0
-        cmp_factor = sqrt((minValue+1)/a)
+        cmp_factor = sqrt(float(left_edge+1)/left_edge)
         while factor < cmp_factor and i < max_bins:
             factor = cmp_factor
             i += 1
-            cmp_factor = ((minValue+i)/a)**(1.0/(i+1))
+            cmp_factor = (float(left_edge+i)/left_edge)**(1.0/(i+1))
 
         # Calculate the correct number of bins and the exact factor so
         # that this number of bins is reached.
-        N_bin = int(np.log(b/a)/np.log(factor))
-        factor = (b/a)**(1.0/N_bin)
+        N_bin = int(np.log(float(right_edge)/left_edge)/np.log(factor))
+        factor = (float(right_edge)/left_edge)**(1.0/N_bin)
 
         # Create bins.
-        bins = [a]
+        bins = [left_edge]
         for i in range(N_bin):
             bins.append(bins[i]*factor)
+        bins[-1] = right_edge # Make sure the last bin is exactly right_edge.
         return bins
 
     @classmethod
-    def __check_parameters(cls, minValue, maxValue, binType, param):
+    def __check_parameters(cls, dataType, minValue, maxValue, binType, param):
         """Make sure the construction parameters are valid."""
 
-        if minValue >= maxValue:
+        if dataType not in (int, float):
+            raise ParameterError("'dataType' must be int or float")
+
+        if minValue >= maxValue and binType != 'custom':
             raise BinLimitError("minValue must be larger than maxValue.")
 
         if binType in ('log', 'logarithmic', 'maxlog'):
@@ -369,105 +403,57 @@ class _BinLimits(tuple):
                 raise ParameterError("factor (param) must be larger than"
                                      " 1 with '%s' bin type."%(binType,))
 
-        if binType in ('maxlog', 'linmaxlog') and param != None:
-            if (param <= 0 or param > 1):
-                # diff must be in [0,1).
-                raise ParameterError("diff (param) must be in open "
-                                     "interval (0,1) with '%s' bin type."
-                                     % binType)
-
         if binType in ('lin', 'linear'):
             if not isinstance(param, int) or param <= 0:
                 raise ParameterError("Number of bins (param) must "
                                      "be a positive integer.")
 
         if binType == 'custom' and not (np.diff(param) > 0).all():
-                raise ParameterError("Bin limits (param) must be an "
+                raise ParameterError("Bin limits (param) must be a strictly "
                                      "increasing sequence.")
 
     @classmethod
-    def __create_bins(cls, minValue, maxValue, binType, param):
+    def __create_bins(cls, dataType, minValue, maxValue, binType, param):
         """Construct bins."""
 
         # Create bins
-        # left and right are the smallest and largest values
-        # that can be placed into the bin.
         if (binType == 'lin' or binType == 'linear'):
             limit_seq = cls.__generateLinbins(minValue, maxValue, param)
             bin_finder = _linBinFinder(limit_seq)
-            left, right = minValue, maxValue
-            
+                
         elif (binType == 'log' or binType == 'logarithmic'):
             limit_seq = cls.__generateLogbins(minValue, maxValue, param, False)
-            # Last bin width will end at the last bin end because the
-            # end of the bin is determined freely. Otherwise the last
-            # bin would be too small.
             bin_finder = _logBinFinder(limit_seq)
-            left, right = minValue, limit_seq[-1]
 
         elif binType == 'linlog':
             limit_seq = cls.__generateLogbins(minValue, maxValue, param, True)
             bin_finder = _linlogBinFinder(limit_seq)
-            left, right = minValue, limit_seq[-1]
 
         elif binType == 'maxlog' and param is None:
             limit_seq = cls.__generateMaxLogbins(minValue, maxValue)
             bin_finder = _logBinFinder(limit_seq)
-            left, right = minValue, maxValue
             
         elif binType == 'maxlog':
-            limit_seq = cls.__generateMaxLogbins(minValue, maxValue, param)
+            limit_seq = cls.__generateMaxLogbins(minValue, maxValue)
             bin_finder = _logBinFinder(limit_seq)
-            left, right = minValue, maxValue
             
         elif binType == 'linmaxlog':
-            limit_seq = [i-0.5 for i in
-                              range(max(0, int(minValue)),
-                                    min(12, int(maxValue)+2))]
+            limit_seq = cls.__generateLinearStart(minValue, maxValue)
             if maxValue > limit_seq[-1]:
+                lastLinValue = limit_seq[-1]
                 limit_seq = limit_seq[:-1]
-                tmp = minValue
-                minValue = 11
-                limit_seq.extend(cls.__generateMaxLogbins(minValue, maxValue, 0.5))
-                minValue = tmp
+                limit_seq.extend(cls.__generateMaxLogbins(lastLinValue, maxValue))
             bin_finder = _linlogBinFinder(limit_seq)
-            left, right = minValue, maxValue
 
         elif binType == 'custom' and (len(param) > 0):
             limit_seq = param
             bin_finder = _binFinder(param)
-            left, right = minValue, maxValue
-            
+            minValue = param[0]
+            maxValue = param[-1]            
         else:
             raise ParameterError("Unidentified parameter combination.")
 
-        return left, right, limit_seq, bin_finder
-
-    @classmethod
-    def __inferDataType(cls, minValue, maxValue, dataType):
-        """ Infer data type.
-
-        The width of each bin depends on whether the bin may contain
-        float or only integers. For example a bin with limits [1.1,
-        2.9] has width 1.8 if data is of type 'float' but width 1 if
-        data is of type 'int', as only one integer can be placed into
-        the bin.
-
-        Unless the data type is explicitely specified, this method is
-        used to infer it from the given minimum and maximum values. If
-        both minValue and maxValue are integers (type 'int')
-        then the data type is also assumed to be integers. Otherwise
-        the data is assumed to be floats.
-        """
-        if dataType == None:
-            if (isinstance(minValue, int) and
-                isinstance(maxValue, int)):
-                return int
-            else:
-                return float
-        else:
-            return dataType
-
+        return minValue, maxValue, limit_seq, bin_finder
 
     def __new__(cls, dataType, minValue, maxValue, binType, param = None):
         """Initialize bin limits.
@@ -479,49 +465,52 @@ class _BinLimits(tuple):
         maxValue: if both are of type int, dataType is also int,
         otherwise float.
         """
+        # Convert dataType to proper type if string given.
+        if isinstance(dataType, str) and dataType in ('int', 'float'):
+            dataType = eval(dataType)
 
-        # Find data type
-        dataType = cls.__inferDataType(minValue, maxValue, dataType)
-
-        # Convert binType to lower case (just in case)
+        # Convert binType to lower case (just in case).
         binType = binType.lower()
 
         # Make sure the input parameters are valid.
-        cls.__check_parameters(minValue, maxValue, binType, param)
+        cls.__check_parameters(dataType, minValue, maxValue, binType, param)
 
-        # Get the bin limits
-        left, right, limit_seq, bin_finder = cls.__create_bins(
-            minValue, maxValue, binType, param)
+        # Get the bin limits.
+        minValue, maxValue, limit_seq, bin_finder = cls.__create_bins(
+            dataType, minValue, maxValue, binType, param)
 
         # Initialize tuple with the bin limits.
         obj = super(_BinLimits, cls).__new__(cls, limit_seq)
 
         # Set object variables and return
         obj.minValue, obj.maxValue = minValue, maxValue
-        obj.left, obj.right = left, right
         obj.bin_finder = bin_finder
         obj.dataType = dataType
         return obj
         
     def centers(self):
         """Return bin centers as array."""
-        bin_centers = []
-        for i in range(len(self)-1):
-            bin_centers.append(0.5*(self[i+1]+self[i]))
-        return np.array(bin_centers)
+        bin_centers = np.zeros(len(self)-1, float)
+        if self.dataType == int:
+            for i in range(len(self)-2):
+                bin_centers[i] = 0.5*(ceil(self[i+1])-1+ceil(self[i]))
+            bin_centers[-1] = 0.5*(ceil(self[-1])+ceil(self[-2]))
+        else:
+            for i in range(len(self)-1):
+                bin_centers[i] = 0.5*(self[i+1]+self[i])
+        return bin_centers
 
     def widths(self):
         """Return bin widths as array."""
         if self.dataType == int:
             bin_widths = np.zeros(len(self)-1, int)
-            for i in range(len(self)-1):
-                bin_widths[i] = ( ceil(min(self[i+1], self.right+0.5))
-                                 - ceil(max(self[i], self.left-0.5)) )
+            for i in range(len(self)-2):
+                bin_widths[i] = ( ceil(self[i+1]) - ceil(self[i]) )
+            bin_widths[-1] = ( ceil(self[-1]) + 1 - ceil(self[-2]) )
         else:
             bin_widths = np.zeros(len(self)-1, float)
             for i in range(len(self)-1):
-                bin_widths[i] = float(min(self[i+1], self.right) -
-                                      max(self[i], self.left))
+                bin_widths[i] = float(self[i+1] - self[i])
         return bin_widths
 
 
@@ -539,9 +528,9 @@ class Bins(object):
         ----------
         dataType : type
             The type of the data, either int or float.  The data type
-            affects the bin widths. For example bin [1.1, 2.9] has
-            width 1.8 if data is of type 'float' but width 1 if data
-            is of type 'int'.
+            affects both bin widths and cecnters. For example bin
+            [1.1, 2.5] has width 1.4 and center 1.8 if `dataType`
+            float, but width 1 and center 2 if `dataType` int.
         minValue : float or integer
             The minimum value that can be placed into the bins.
         maxValue : float or integer
@@ -582,25 +571,24 @@ class Bins(object):
             maxValue must be integers whenever they are smaller than
             11, otherwise expection ValueError is raised.
 
-        'maxlog': param = diff (float, 0 < diff < 1)
+        'maxlog': (no parameter)
             Construct as many logarithmic bins as possible between
             minValue-diff and maxValue+diff so that each bin contains
             at least one integer. minValue and maxValue must be
             integers.
 
-        'linmaxlog': param = diff (float, 0 < diff < 1)
+        'linmaxlog': (no parameter)
             Same as 'maxlog', but the use linear bins for small values
             exactly as in 'linlog'.
 
         'custom': param = bin_limits (sequence)
-            Uses any arbitrary bin limits. bin_limits must be a
-            sequence of growing values. Note that bin[0] is inclusive
-            and bin[-1] is exclusive. minValue and maxValue are used
-            as the minimum and maximum values when calculating the bin
-            width: minValue (maxValue) is the smallest (largest)
-            possible value that can be put into the bin. If minValue
-            <= bins[0] or maxValue >= bins[-1], the corresponding
-            value has no effect.
+            Use any strictly increasing sequence as bin limits. A
+            value is put into bin i with
+                bin_limits[i] <= value < bin_limits[i+1],
+            with the exception of the last bin, which also includes
+            bin_limits[-1]. In other words, both bin_limits[0] and
+            bin_limits[-1] are inclusive. `minValue` and `maxValue`
+            are ignored.
         """
 
         if not isinstance(dataType, type):
@@ -922,11 +910,10 @@ class Bins(object):
 
         Returns
         -------
-        binned_data : ma.masked_array
-            The binned data, with length N, where binned_data[i] is
-            the median of all values that fall into the bin. The bins
-            with no values are masked. To get a plain list, use
-            binned_data.tolist().
+        binned_data : list of ma.masked_arrays
+            Element binned_data[i] contains the median of all elements
+            that fall into the bin.  The bins with no values are
+            masked. To get a plain list, use binned_data.tolist().
 
         Exceptions
         ----------
@@ -939,7 +926,65 @@ class Bins(object):
         saving all elements. If the number of data points is very
         large, this method can take up a large amount of memory.
         """
-        binElements = [ [] for i in range(len(self))]
+        return self.bin_percentile(data, (0.5,))[0]
+
+    def bin_percentile(self, data, perc=None):
+        """
+        Bin data and return the median in each bin.
+
+        Parameters
+        ----------
+        data : iterable
+            The data to be binned. Each element must be a pair (coord,
+            value). The element is then placed into the bin i with
+            bins[i] <= coord < bins[i+1]
+        perc : sequence of floats <= 0.5
+            The percentiles to calculate. The p:th percentile is the
+            value below which one can find fraction p of the data. The
+            percentiles will be calculated symmetrically: for each p <
+            0.5 a corresponding percentile at 1-p will also be
+            returned.
+
+        Returns
+        -------
+        binned_data : list of ma.masked_arrays
+            The returned list will be of length 2*len(perc), or if 0.5
+            is in `perc`, of length 2*len(perc)+1; in other words,
+            there is one ma.masked_array for each p and 1-p, but only
+            one for p = 0.5. Each masked array contains the percentile
+            of the data that falls into that bin.
+
+            The bins with no values are masked. To get a plain list,
+            use binned_data[i].tolist().
+
+        Exceptions
+        ----------
+        Raise ParameterError if `perc` is empty.
+        Raise ParameterError if any element of `perc` is not in (0, 0.5].
+        Raise BinLimitError if any element does not fit into the bins.
+        Raise DataTypeError if data does not consist of pairs. 
+
+        Notes
+        -----
+        Finding the percentiles of an arbitrary sequence requires
+        first saving all elements. If the number of data points is
+        very large, this method can take up a lot of memory.
+        """
+        if not perc: # This covers both None and empty `perc`.
+            raise ParameterError("No percentiles given.")
+        else:
+            # Process `perc` so that it includes all percentiles that
+            # we will go through.
+            perc = sorted(list(perc))
+            if perc[0] <= 0 or perc[-1] > 0.5:
+                raise ParameterError("Percentiles must be in (0, 0.5].")
+            if perc[-1] == 0.5:
+                # This works also if perc = [0.5].
+                perc = perc[:-1] + [0.5] + [1-p for p in reversed(perc[:-1])]
+            else:
+                perc += [1-p for p in perc[::-1]]
+
+        binElements = [[] for i in range(len(self))]
 
         for elem in data:
             # Make sure the data is valid.
@@ -960,15 +1005,21 @@ class Bins(object):
                     raise DataTypeError("Elements of input data must be "
                                         "sequences with length at least 2.")
 
-        binMedians = np.zeros(len(self), float)
-
-        # Find medians for each bin. If a bin has no values, np.median
-        # returns nan.
+        # Sort the data in each bin.
         for i, elements in enumerate(binElements):
-            binMedians[i] = np.median(elements)
+            binElements[i] = sorted(binElements[i])
 
-        return np.ma.masked_array(binMedians, np.isnan(binMedians))
+        # Find percentiles for each bin. If a bin has no values,
+        # data_utils.percentile returns None, which will be turned
+        # into a nan by numpy.
+        perc_arrays = []
+        for p in perc:
+            binPerc = np.zeros(len(self), float)
+            for i, elements in enumerate(binElements):
+                binPerc[i] = data_utils.percentile(elements, p)
+            perc_arrays.append(np.ma.masked_array(binPerc, np.isnan(binPerc)))
 
+        return perc_arrays
 
 class Bins2D(object):
     """ Class for binning 2-dimensional data."""
@@ -985,12 +1036,12 @@ class Bins2D(object):
         necessary parameters for bins in both x- and y-directions. See
         the documentation of Bins for more information.
         """
-        self.x_limits = _BinLimits(X_dataType, X_minValue, X_maxValue,
-                                   X_binType, X_param)
-        self.y_limits = _BinLimits(Y_dataType, Y_minValue, Y_maxValue,
-                                   Y_binType, Y_param)
-        self.x_bin_finder = self.x_limits.bin_finder
-        self.y_bin_finder = self.y_limits.bin_finder
+        self.bin_limits = [_BinLimits(X_dataType, X_minValue, X_maxValue,
+                                      X_binType, X_param),
+                           _BinLimits(Y_dataType, Y_minValue, Y_maxValue,
+                                      Y_binType, Y_param)]
+        self.x_bin_finder = self.bin_limits[0].bin_finder
+        self.y_bin_finder = self.bin_limits[1].bin_finder
 
     @property
     def shape(self):
@@ -999,7 +1050,7 @@ class Bins2D(object):
             return self._shape
         except AttributeError:
             """Return the number of bins in x- and y-directions."""
-            self._shape = (len(self.x_limits)-1, len(self.y_limits)-1)
+            self._shape = (len(self.bin_limits[0])-1, len(self.bin_limits[1])-1)
             return self._shape
 
     # Create getter for bin centers.
@@ -1009,8 +1060,8 @@ class Bins2D(object):
         try:
             return self._centers
         except AttributeError:
-            self._centers = (self.x_limits.centers(),
-                             self.y_limits.centers())
+            self._centers = (self.bin_limits[0].centers(),
+                             self.bin_limits[1].centers())
             return self._centers
 
     @property
@@ -1019,8 +1070,8 @@ class Bins2D(object):
         try:
             return self._center_grids
         except AttributeError:
-            self._center_grids = np.meshgrid(self.x_limits.centers(),
-                                             self.y_limits.centers())
+            self._center_grids = np.meshgrid(self.bin_limits[0].centers(),
+                                             self.bin_limits[1].centers())
             return self._center_grids
 
     @property
@@ -1033,7 +1084,7 @@ class Bins2D(object):
         try:
             return self._edge_grids
         except AttributeError:
-            self._edge_grids = np.meshgrid(self.x_limits,self.y_limits)
+            self._edge_grids = np.meshgrid(self.bin_limits[0],self.bin_limits[1])
             return self._edge_grids
 
 
@@ -1043,8 +1094,8 @@ class Bins2D(object):
         try:
             return self.bin_widths
         except AttributeError:
-            self.bin_widths = np.outer(self.x_limits.widths(),
-                                       self.y_limits.widths())
+            self.bin_widths = np.outer(self.bin_limits[0].widths(),
+                                       self.bin_limits[1].widths())
             return self.bin_widths
 
     def __check_data_element(self, elem, N):
@@ -1056,16 +1107,16 @@ class Bins2D(object):
         """
         # Check bin limits and correct sequence type.
         try:
-            if (elem[0] < self.x_limits.minValue or
-                elem[0] > self.x_limits.maxValue):
+            if (elem[0] < self.bin_limits[0].minValue or
+                elem[0] > self.bin_limits[0].maxValue):
                 raise BinLimitError("X-coordinate %g is not in the interval [%g"
-                                    ", %g]." % (elem[0], self.x_limits.minValue,
-                                                self.x_limits.maxValue) )
-            elif (elem[1] < self.y_limits.minValue or
-                  elem[1] > self.y_limits.maxValue):
+                                    ", %g]." % (elem[0], self.bin_limits[0].minValue,
+                                                self.bin_limits[0].maxValue) )
+            elif (elem[1] < self.bin_limits[1].minValue or
+                  elem[1] > self.bin_limits[1].maxValue):
                 raise BinLimitError("Y-coordinate %g is not in the interval [%g"
-                                    ", %g]." % (elem[1], self.y_limits.minValue,
-                                       self.y_limits.maxValue) )
+                                    ", %g]." % (elem[1], self.bin_limits[1].minValue,
+                                       self.bin_limits[1].maxValue) )
         except TypeError, IndexError:
             # TypeError occurs when data is a list and elem is
             # integer or a float. Rather surprisingly, numpy
