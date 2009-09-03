@@ -261,6 +261,18 @@ class TestBins(unittest.TestCase):
         for w in b.widths:
             self.assert_(w >= 1)
 
+    def test_custom_bins(self):
+        """Test arbitrary bins."""
+        bins = binner.Bins(int, 0, 0, 'custom', [1, 2.5, 4.5])
+        self.assertEqual(bins.widths.tolist(), [2, 2])
+        self.assertEqual(bins.centers.tolist(), [1.5, 3.5])
+
+        bins = binner.Bins(int, 0, 0, 'custom', [-1.5, 0, 6.5, 6.6])
+        self.assertEqual(bins.widths.tolist(), [1, 7, 0])
+
+        bins = binner.Bins(int, 0, 0, 'custom', [-10, -4, -1.5])
+        self.assertEqual(bins.widths.tolist(), [6, 3])
+        
     def test_Count(self):
         # Check correct result
         binned_data = self.bins.bin_count(self.coords)
