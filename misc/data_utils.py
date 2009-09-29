@@ -4,7 +4,6 @@ import operator
 import sys
 import numpy as np
 from random import sample
-from timing import Timer
 from collections import deque
 
 class __field_converter(object):
