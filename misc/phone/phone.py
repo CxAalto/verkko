@@ -149,7 +149,7 @@ class PhoneEvents(object):
                 userEvents.append(event)
             else:
                 yield userEvents
-                userEvents=[]
+                userEvents=[event]
                 thisUser=event.fr
 
     
@@ -205,6 +205,71 @@ class PhoneEvents(object):
                     #triggering is allowed for outgoing calls also
                     if allowOutgoingCalls and event.call:
                         lastReversedEvents.append(event.getReversed())
+
+    def getInterEventTimes(self,loopTime=False):
+        """
+        Returns an array of inter-event times. 
+        The time at index i of the array corresponds to the difference
+        in time from the event i and the last event between the two 
+        users. That is, if event i is a call between users A and B, the
+        inter-event time with index i would be IE_i = t_i - t_j, where
+        t_i is the time of the event i and t_j is the time of the event j,
+        which is the last event between A and B before event i.
+        
+        Parameters
+        ----------
+        loopTime: If True, periodic boundary conditions for time is used, which
+        means that the time between the first and the last event in the data is 
+        set to zero. If False, the leading events of the first events are considered
+        missing, and a negative value for inter-event time is assigned to them.
+        
+        """
+        def getEvents(self):
+            thisEvent=None
+            events=[]
+            for event in self:
+                if thisEvent==None:
+                    thisEvent=(event.fr,event.to)
+
+                if (event.fr,event.to)==thisEvent:
+                    events.append(event)
+                else:
+                    yield events
+                    events=[event]
+                thisEvent=(event.fr,event.to)
+
+
+        if ( len(self.sortOrder) < 3 or 
+             self.sortOrder[0] != "fr" or 
+             self.sortOrder[1] != "to" or 
+             self.sortOrder[2] != "time" ):
+            raise Exception("Events are not properly sorted.")
+        
+        if not self.reversed:
+            raise Exception("The data must contain reversed events.")
+
+        if loopTime:
+            dataDuration=max(self.eventData.time)-min(self.eventData.time)
+
+        ieTimes=numpy.zeros(self.numberOfEvents/2,dtype="int32")
+        #for i in range(len(ieTimes)):
+        #    ieTimes[i]=-2
+
+        for events in getEvents(self):
+            if events[0].fr<events[0].to:
+                for i,event in enumerate(events):
+                    thisTime=event.time
+                    previousTime=events[i-1].time
+                    if i==0:
+                        if loopTime:
+                            deltaTime=thisTime-previousTime+dataDuration
+                        else:
+                            deltaTime=-1
+                    else:
+                        deltaTime=thisTime-previousTime
+                    ieTimes[event.originalIndex]=deltaTime
+        
+        return ieTimes
 
 
 class PhoneEventsStatic(PhoneEvents):
