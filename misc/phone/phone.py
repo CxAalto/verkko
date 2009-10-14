@@ -17,6 +17,7 @@ events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/lcCalls_reve
 from sys import stdout
 import numpy
 from time import *
+from collections import deque
 
 class PhoneEvent(object):
     defaultStartTime = mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
@@ -151,9 +152,13 @@ class PhoneEvents(object):
                 userEvents=[]
                 thisUser=event.fr
 
+    
 
-
-    def getTriggeredEvents(self, delta, allowReturn=True):
+    def getTriggeredEvents_tree(self, delta, allowReturn=True):
+        """This generator returns all possible triggered events which
+        have time delta between them, and no other triggering event between
+        them.
+        """
         if ( len(self.sortOrder) < 2 or 
              self.sortOrder[0] != "fr" or 
              self.sortOrder[1] != "time" ):
@@ -169,6 +174,38 @@ class PhoneEvents(object):
                     if allowReturn or event.to!=lastReversedEvent.to:
                         yield (lastReversedEvent.getReversed(), event)
         #remove sms
+
+    def getTriggeredEvents_net(self, delta, allowReturn=True,allowOutgoingCalls=True):
+        """This generator returns all possible triggered events which
+        have time delta between them.
+
+        TODO: looping time
+        """
+        if ( len(self.sortOrder) < 2 or 
+             self.sortOrder[0] != "fr" or 
+             self.sortOrder[1] != "time" ):
+            raise Exception("Events are not properly sorted.")
+        for userEvents in self.getUsers():
+            #lastReversedEvents=[] #you should use queue instead of list. this is very slow
+            lastReversedEvents=deque()
+            for event in userEvents:
+                if event.reversed:
+                    lastReversedEvents.append(event)
+                else:
+                    #first remove all too old events
+                    while len(lastReversedEvents)!=0 and  int(event.time)-int(lastReversedEvents[0].time)-int(lastReversedEvents[0].duration) > delta:
+                        lastReversedEvents.popleft()
+                    #then add link from the sufficiently new events to the current one
+                    for oldEvent in lastReversedEvents:
+                        if allowReturn or event.to!=oldEvent.to:
+                            timeBetween=int(event.time)-int(oldEvent.time)-int(oldEvent.duration)
+                            yield (oldEvent.getReversed(), event,timeBetween)
+
+                    #finally add the event to the queue if it is a call and
+                    #triggering is allowed for outgoing calls also
+                    if allowOutgoingCalls and event.call:
+                        lastReversedEvents.append(event.getReversed())
+
 
 class PhoneEventsStatic(PhoneEvents):
     pass
