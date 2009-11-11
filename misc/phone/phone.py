@@ -282,7 +282,7 @@ class PhoneEventsContainer(PhoneEvents):
     """
     
     def __init__(self, inputFileName, numberOfEvents=None, numberOfUsers=None,
-                 reversed=False,startTime=None,verbose=True,format="orig",
+                 reversed=False,startTime=None,verbose=True,format=None,
                  sortOrder=()):
 
         # Initialize parent class. Note that if startTime is None,
@@ -295,6 +295,11 @@ class PhoneEventsContainer(PhoneEvents):
 
         self.iterateCalls = True # What are
         self.iterateSMS = True   #  these?
+
+        if format is None and inputFileName.split('.')[-1] == 'npy':
+            format = 'numpy'
+        else:
+            format = 'orig'
 
         if format != "numpy":
             # The number of events must only be specified when the
