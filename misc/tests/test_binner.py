@@ -239,6 +239,18 @@ class TestBins(unittest.TestCase):
         exp_widths = [1.0]*len(b)
         self.assertEqual(b.widths.tolist(), exp_widths)
 
+    def test_Linlogbinfinder_zeroBehaviour(self):
+        b = binner.Bins(float, 0, 20, 'linlog', 2)
+        data = [(1,7), (0,8)]
+        exp_result = [8.0, 7.0] + [None]*10
+        self.assertEqual(b.bin_average(data).tolist(), exp_result)
+        data.append((-1,2))
+        self.assertRaises(binner.BinLimitError, b.bin_average, data)
+
+        b = binner.Bins(float, 1, 20, 'linlog', 2)
+        data = [(1,7), (0,8)]
+        self.assertRaises(binner.BinLimitError, b.bin_average, data)
+
     def test_Linlogbins_float(self):
         b = binner.Bins(float, 7, 12, 'linlog', 2)
         exp_bins = (7, 8, 9, 10, 11, 22)
@@ -382,7 +394,7 @@ class TestBins(unittest.TestCase):
                 (6, 10), (6, 30), (7, 100), (7, 300),
                 (14, 42),
                 (20, 1.1), (20, 1.5), (20, 1.5), (20, 1.9)]
-        perc = (0.2, 0.25)
+        perc = (0.2, 0.25, 0.75, 0.8)
         expected_res = ([0.2*1+0.8*2,None,None,0.4*10+0.6*30,None,None,None,42,None,0.4*1.1+0.6*1.5],
                         [2.0,None,None,0.25*10+0.75*30,None,None,None,42,None,0.25*1.1+0.75*1.5],
                         [4.0,None,None,0.75*100+0.25*300,None,None,None,42,None,0.75*1.5+0.25*1.9],
@@ -396,7 +408,6 @@ class TestBins(unittest.TestCase):
 
         # Check exceptions
         self.assertRaises(binner.ParameterError, self.bins.bin_percentile, data)
-        self.assertRaises(binner.ParameterError, self.bins.bin_percentile, data, (0.2, 0.6))
         self.assertRaises(binner.DataTypeError, self.bins.bin_percentile, self.coords, (0.1, 0.2))
         self.assertRaises(binner.BinLimitError, self.bins.bin_percentile, self.bad_data_A, (0.1, 0.2))
         self.assertRaises(binner.BinLimitError, self.bins.bin_percentile, self.bad_data_B, (0.1, 0.2))
