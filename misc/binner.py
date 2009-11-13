@@ -249,7 +249,7 @@ class _BinLimits(tuple):
     @classmethod
     def __generateLinearStart(cls, minValue, maxValue):
         """Generate the linear start for linlog bins."""
-        return range(max(1, int(minValue)), min(12, int(maxValue)+2))
+        return range(max(0, int(minValue)), min(12, int(maxValue)+2))
 
     @classmethod
     def __generateLinbins(cls, left_edge, right_edge, N_bins):
@@ -381,9 +381,9 @@ class _BinLimits(tuple):
                                     "with '%s' bin type." % (binType,))
 
         if binType in ('linlog', 'linmaxlog'):
-            # minValue must be positive in logarithmic bins.
+            # minValue must be non-negative in lin-log bins.
             if minValue < 0:
-                raise BinLimitError("minValue must be positive "
+                raise BinLimitError("minValue must be non-negative "
                                     "with '%s' bin type." % (binType,))
 
             # The lower limit in linlog types must be integer, and
@@ -938,21 +938,18 @@ class Bins(object):
             The data to be binned. Each element must be a pair (coord,
             value). The element is then placed into the bin i with
             bins[i] <= coord < bins[i+1]
-        perc : sequence of floats <= 0.5
+        perc : sequence of floats
             The percentiles to calculate. The p:th percentile is the
-            value below which one can find fraction p of the data. The
-            percentiles will be calculated symmetrically: for each p <
-            0.5 a corresponding percentile at 1-p will also be
-            returned.
+            value below which one can find fraction p of the data.
 
         Returns
         -------
         binned_data : list of ma.masked_arrays
-            The returned list will be of length 2*len(perc), or if 0.5
-            is in `perc`, of length 2*len(perc)+1; in other words,
-            there is one ma.masked_array for each p and 1-p, but only
-            one for p = 0.5. Each masked array contains the percentile
-            of the data that falls into that bin.
+            The returned list will be of length len(perc), and there
+            is one ma.masked_array for each p in perc. Percentiles are
+            calculated and returned in increasing order. Each masked
+            array contains the percentile of the data that falls into
+            that bin.
 
             The bins with no values are masked. To get a plain list,
             use binned_data[i].tolist().
@@ -960,7 +957,7 @@ class Bins(object):
         Exceptions
         ----------
         Raise ParameterError if `perc` is empty.
-        Raise ParameterError if any element of `perc` is not in (0, 0.5].
+        Raise ParameterError if any element of `perc` is not in (0, 1.0).
         Raise BinLimitError if any element does not fit into the bins.
         Raise DataTypeError if data does not consist of pairs. 
 
@@ -972,17 +969,8 @@ class Bins(object):
         """
         if not perc: # This covers both None and empty `perc`.
             raise ParameterError("No percentiles given.")
-        else:
-            # Process `perc` so that it includes all percentiles that
-            # we will go through.
-            perc = sorted(list(perc))
-            if perc[0] <= 0 or perc[-1] > 0.5:
-                raise ParameterError("Percentiles must be in (0, 0.5].")
-            if perc[-1] == 0.5:
-                # This works also if perc = [0.5].
-                perc = perc[:-1] + [0.5] + [1-p for p in reversed(perc[:-1])]
-            else:
-                perc += [1-p for p in perc[::-1]]
+
+        perc = sorted(list(perc))
 
         binElements = [[] for i in range(len(self))]
 
