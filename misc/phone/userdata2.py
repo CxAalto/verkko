@@ -298,7 +298,7 @@ class UserData(np.recarray):
                    UserData.prepaid: 1}
         with open(fileName, 'w') as f:
             for i, u in enumerate(self):
-                if not isEmpty(u):
+                if not self.isEmpty(u):
                     f.write(formatStr % (i, u['age'], genderMap[u['gender']],
                                          u['ZIP'], typeMap[u['usertype']],
                                          u['contractID'], u['activationDate'],
