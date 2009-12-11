@@ -1,16 +1,44 @@
 """
 Module for analysing events in mobile phone networks.
 
+How to load events from multiple txt-files:
 
-Loading events:
-numberOfUsers=3786611
-numberOfEvents=74368195
-events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/events_lccAll_reversed_false_timesorted.npy",numberOfEvents,numberOfUsers,reversed=False,format="numpy",sortOrder=("time",))
+>>> import phone.phone2 as ph
+>>> txtFileNames = ["time_res_2008%02d_sorted_sec.txt" % i for i in (1,2,3)]
+>>> txtFileNames
+['time_res_200801_sorted_sec.txt',
+ 'time_res_200802_sorted_sec.txt',
+ 'time_res_200803_sorted_sec.txt']
+>>> pec = ph.PhoneEventsContainer(txtFileNames, startTime=1199142000, 
+                                  format='sec', sortOrder=("time",))
+0
+1000000
+2000000
+...
+...
+>>> len(pec)
+422893707
 
-Loading events and added reversed events:
-events=PhoneEventsContainer("/proj/net_scratch/Mikko/phone_dynamics/lcCalls_reverse_users_time.npy",numberOfEvents,numberOfUsers,reversed=True,format="numpy",sortOrder=("fr","time"))
+After reading all data, `pec` contains all events in the files given
+in `txtFileNames`, in that order. `startTime` is the first time in all
+events, and the easiest way to find it is with Unix
+'head'-command. `format='sec'` means that times are in seconds since
+epoch, 'orig' would mean times in original human readable
+format. `sortOrder` is a promise that the data is already sorted in
+the given order.
 
+To save the data in 'npy'-format needs only one command:
 
+>>> npyFileName = "time_res_2008_sorted_sec.txt"
+>>> pec.saveData(npyFileName)
+
+You can now delete the variable and load it from the npy file in a
+matter of minutes:
+
+>>> del pec
+>>> pec = ph.PhoneEventsContainer(npyFileName, sortOrder=("time",))
+>>> len(pec)
+422893707
 
 """
 
