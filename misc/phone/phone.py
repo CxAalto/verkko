@@ -296,10 +296,11 @@ class PhoneEventsContainer(PhoneEvents):
         self.iterateCalls = True # What are
         self.iterateSMS = True   #  these?
 
-        if format is None and inputFileName.split('.')[-1] == 'npy':
-            format = 'numpy'
-        else:
-            format = 'orig'
+        if format is None:
+            if inputFileName.split('.')[-1] == 'npy':
+                format = 'numpy'
+            else:
+                format = 'orig'
 
         if format != "numpy":
             # The number of events must only be specified when the
@@ -395,6 +396,33 @@ class PhoneEventsContainer(PhoneEvents):
 
     def saveData(self,filename):
         numpy.save(filename, self.eventData)
+
+    def filter_by_time(self, t0, t1):
+        """Filter events by time.
+
+        Takes only events between `t0` (inclusive) and `t1`
+        (exclusive).
+        """
+        if self.sortOrder[0] == "time":
+            # Find indices Get to t0.
+            i0, i1 = 0, 0
+            it = iter(self.eventData)
+            for i0, e in enumerate(it):
+                if e['time'] >= t0: break
+            for i1, e in enumerate(it):
+                if e['time'] >= t1: break
+            i1 += i0
+            print "i0 = %d, i1 = %d" % (i0,i1)
+            self.eventData = self.eventData[i0:i1]
+        else:
+            I = []
+            for i, e in enumerate(it):
+                if e.time >= t0 and e.time < t1:
+                    I.append(i)
+            self.eventData = np.take(self.eventData, I, 0)
+            
+        self.startTime = t0
+        self.numberOfEvents = len(self.eventData)
 
     def __getitem__(self,index):
         return PhoneEvent(record = self.eventData[index])
