@@ -429,6 +429,43 @@ class PhoneEventsContainer(PhoneEvents):
                 if self.iterateSMS:
                     yield event
 
+    def __reversed__(self):
+        for eventRecord in reversed(self.eventData):
+            event = PhoneEvent(record=eventRecord)
+            if event.call:
+                if self.iterateCalls:
+                    yield event
+            else:
+                if self.iterateSMS:
+                    yield event
+
+    def filter_by_time(self, t0, t1):
+        """Filter events by time.
+
+        Takes only events between `t0` (inclusive) and `t1`
+        (exclusive).
+        """
+        if self.sortOrder[0] == "time":
+            # Find indices Get to t0.
+            i0, i1 = 0, 0
+            it = iter(self.eventData)
+            for i0, e in enumerate(it):
+                if e['time'] >= t0: break
+            for i1, e in enumerate(it):
+                if e['time'] >= t1: break
+            i1 += i0
+            print "i0 = %d, i1 = %d" % (i0,i1)
+            self.eventData = self.eventData[i0:i1]
+        else:
+            I = []
+            for i, e in enumerate(it):
+                if e.time >= t0 and e.time < t1:
+                    I.append(i)
+            self.eventData = np.take(self.eventData, I, 0)
+            
+        self.startTime = t0
+        self.numberOfEvents = len(self.eventData)
+
     def saveData(self,fileName):
         numpy.save(fileName, self.eventData)
 

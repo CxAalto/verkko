@@ -293,8 +293,8 @@ class PhoneEventsContainer(PhoneEvents):
 
         self.reversed = reversed
 
-        self.iterateCalls = True # What are
-        self.iterateSMS = True   #  these?
+        self.iterateCalls = True # These can be turned off manually if
+        self.iterateSMS = True   # you only want to iterate one of them!
 
         if format is None:
             if inputFileName.split('.')[-1] == 'npy':
@@ -386,6 +386,16 @@ class PhoneEventsContainer(PhoneEvents):
 
     def __iter__(self):
         for index, eventRecord in enumerate(self.eventData):
+            event = PhoneEvent(record=eventRecord)
+            if event.call:
+                if self.iterateCalls:
+                    yield event
+            else:
+                if self.iterateSMS:
+                    yield event
+
+    def __reversed__(self):
+        for eventRecord in reversed(self.eventData):
             event = PhoneEvent(record=eventRecord)
             if event.call:
                 if self.iterateCalls:
