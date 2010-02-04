@@ -15,7 +15,7 @@ Available fields:
   'ZIP'            Customer ZIP code. Note that this is save as integer
                    for performance reasons, use formatting '%05d' to 
                    zero-pad to proper length.
-  'validZIP'       True if ZIP is valid. ZIP is valid if it included in
+  'validZIP'       True if ZIP is valid. ZIP is valid if it is included in
                    the list of valid ZIP codes in the country in question.
                    Corrupted ZIP codes (non-numeral characters, less than 
                    five digits, etc.) are always invalid.
@@ -41,6 +41,10 @@ Usage:
 >>> udata.save('userdata.npy')
 >>> del udata
 >>> udata = UserData('userdata.npy')
+
+>>> # The original ASCII file name is also stored:
+>>> udata.originalFileName()
+'userdata.txt'
 
 >>> # Take a look at the data of a single user.
 >>> udata[1127]
@@ -105,11 +109,12 @@ def getValidZIPs():
     # The file with all ZIP codes in the country in question. These
     # will be used to check the valitidity of user ZIP codes.
     zipDataFileName = ("/proj/net_scratch/data/MobilePhoneData/"
-                       "set1/other/zips/zips_geo_v2.txt")
+                       "GeoPostCode/GeoPC_ES/GeoPC_ES.csv")
     zips = set()
     with open(zipDataFileName, 'r') as f:
         for line in f:
-            zips.add(int(line.split("|")[0]))
+            zips.add(int(line.split(';')[8][1:-1]))
+            #zips.add(int(line.split("|")[0]))
     return zips
 
 class UserData(np.recarray):
@@ -168,6 +173,9 @@ class UserData(np.recarray):
         See the documentation of this class for rules applied when
         interpreting missing or invalid values.
         """
+        # Save the original file name.
+        self.__originalASCIIFileName = fileName
+
         # Get a set of all valid ZIP codes.
         valid_zips = getValidZIPs()
 
@@ -232,7 +240,7 @@ class UserData(np.recarray):
                 self[userID]['latitude'] = latitude
                 self[userID]['longitude'] = longitude
                       
-    def __new__(cls, fileName, N_users=None):
+    def __new__(cls, fileName, max_user_id=None):
         """Initialize user data from file.
 
         Parameters
@@ -241,9 +249,9 @@ class UserData(np.recarray):
             If the ending is '.npy', the file is assumed to be a saved
             UserData object and is loaded accordingly. Otherwise
             fileName must be a text file of user data.
-        N_users : int
-            The number of users. If None, the number of lines in
-            fileName is used.
+        max_user_id : int
+            The maximum user id. If None, the number of lines in
+            `fileName` is used.
         """
         if fileName.split('.')[-1] == 'npy':
             # Read existing saved data and return the read object.
@@ -252,19 +260,24 @@ class UserData(np.recarray):
             # Attempt to read text file. If the number of users is not
             # specified, the number of lines in fileName is used
             # instead.
-            if N_users is None:
-                N_users = int(os.popen("wc -l %s" % fileName).next().split()[0])
-                print "Found %d lines." % N_users # DEBUG
-            # Construct the object.
+            if max_user_id is None:
+                max_user_id = int(os.popen("wc -l %s" % fileName).next().split()[0])
+                print "Found %d lines." % max_user_id # DEBUG
+                max_user_id
+            # Construct the data object.
             dtype = [('age', np.uint8), ('gender', np.uint8), ('ZIP', np.uint32), 
                      ('validZIP', bool), ('usertype', np.uint8),
                      ('contractID', np.uint32), ('activationDate', '|S8'), 
                      ('disconnectDate', '|S8'), ('latitude', np.float32), 
                      ('longitude', np.float32)]
-            obj = super(UserData, cls).__new__(cls, N_users, dtype=dtype)
+            obj = super(UserData, cls).__new__(cls, max_user_id+1, dtype=dtype)
             # Read in the data into the object.
             obj.__initFromASCII(fileName)
             return obj
+
+    def originalFileName(self):
+        """Returns the file name of the original data file."""
+        return self.__originalASCIIFileName
 
     def save(self, fileName):
         """Save user data as numpy binary.
