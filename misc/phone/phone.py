@@ -289,7 +289,7 @@ class PhoneEventsContainer(PhoneEvents):
         # PhoneEvents uses the default start time (defined in
         # PhoneEvents).
         PhoneEvents.__init__(self, startTime = startTime, sortOrder=sortOrder)
-        self.numberOfUsers=numberOfUsers # Used nowhere? (LK 4.8.2008)
+        self.numberOfUsers=numberOfUsers
 
         self.reversed = reversed
 
