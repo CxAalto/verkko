@@ -152,6 +152,7 @@ class PhoneEvents(object):
                 userEvents=[event]
                 thisUser=event.fr
 
+        yield userEvents
     
 
     def getTriggeredEvents_tree(self, delta, allowReturn=True):
@@ -197,7 +198,7 @@ class PhoneEvents(object):
                         lastReversedEvents.popleft()
                     #then add link from the sufficiently new events to the current one
                     for oldEvent in lastReversedEvents:
-                        if allowReturn or event.to!=oldEvent.to:
+                        if allowReturn or len(set((event.to,event.fr,oldEvent.to,oldEvent.fr)))==3:
                             timeBetween=int(event.time)-int(oldEvent.time)-int(oldEvent.duration)
                             yield (oldEvent.getReversed(), event,timeBetween)
 
@@ -223,6 +224,10 @@ class PhoneEvents(object):
         set to zero. If False, the leading events of the first events are considered
         missing, and a negative value for inter-event time is assigned to them.
         
+        Returns
+        -------
+        An array of inter-event times. 
+
         """
         def getEvents(self):
             thisEvent=None
@@ -270,6 +275,61 @@ class PhoneEvents(object):
                     ieTimes[event.originalIndex]=deltaTime
         
         return ieTimes
+
+
+    def getInterEventEvents(self,loopTime=False):
+        """
+        Returns an array of number of inter-event events. 
+        The time at index i of the array corresponds to the difference
+        in time from the event i and the last event between the two 
+        users. That is, if event i is a call between users A and B, the
+        inter-event time with index i would be IE_i = t_i - t_j, where
+        t_i is the time of the event i and t_j is the time of the event j,
+        which is the last event between A and B before event i.
+        
+        Parameters
+        ----------
+        loopTime: If True, periodic boundary conditions for time is used, which
+        means that the time between the first and the last event in the data is 
+        set to zero. If False, the leading events of the first events are considered
+        missing, and a negative value for inter-event time is assigned to them.
+        
+        Returns
+        -------
+        An array of number inter-event events. 
+
+        """
+
+        if not self.reversed:
+            raise Exception("The data must contain reversed events.")
+
+
+        ieEvents=numpy.zeros(self.numberOfEvents/2,dtype="int32")
+        for i in xrange(len(ieEvents)):
+            ieEvents[i]=0
+
+        self.sort(("fr","time"))
+
+        for userEvents in self.getUsers():
+            lastIndex={}
+            firstEvents={}
+            for eventIndex,event in enumerate(userEvents):
+                eventProxy=(event.fr,event.to)
+                if eventProxy in lastIndex:
+                    ieEvents[event.originalIndex]+=eventIndex-lastIndex[eventProxy]-1
+                else:
+                    firstEvents[event]=eventIndex
+                lastIndex[eventProxy]=eventIndex
+                
+            if loopTime:
+                for event in firstEvents:
+                    ieEvents[event.originalIndex]+=len(userEvents)-lastIndex[(event.fr,event.to)]+firstEvents[event]-1                    
+            else:
+                for event in firstEvents:
+                    ieEvents[event.originalIndex]=-2
+
+                    
+        return ieEvents
 
 
 class PhoneEventsStatic(PhoneEvents):
