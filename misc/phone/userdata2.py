@@ -1,6 +1,9 @@
 """
 Module for analysing mobile phone network metadata.
 
+NOTE: This file is used for mobile phone data set 2. For set 1, use
+userdata.py instead.
+
 This file works with the new data (set2) received in November 2009.
 
 Available fields:

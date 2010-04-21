@@ -1,6 +1,9 @@
 """
 Module for analysing mobile phone network metadata.
 
+NOTE: This file is used for mobile phone data set 1. For set 2, use
+userdata2.py instead.
+
 Usage:
 
 >>> # Read user data either from a text file or from a previously

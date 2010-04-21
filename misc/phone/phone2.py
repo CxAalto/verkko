@@ -1,6 +1,9 @@
 """
 Module for analysing events in mobile phone networks.
 
+NOTE: This file is used for mobile phone data set 2. For set 1, use
+phone.py instead.
+
 How to load events from multiple txt-files:
 
 >>> import phone.phone2 as ph
@@ -318,8 +321,8 @@ class PhoneEventsContainer(PhoneEvents):
 
         self.reversed = reversed
 
-        self.iterateCalls = True # What are
-        self.iterateSMS = True   #  these?
+        self.iterateCalls = True 
+        self.iterateSMS = True 
 
         # Deduce file format if not given.
         if format is None:
