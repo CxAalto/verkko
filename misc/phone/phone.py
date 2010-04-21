@@ -1,6 +1,8 @@
 """
 Module for analysing events in mobile phone networks.
 
+NOTE: This file is used for mobile phone data set 1. For set 2, use
+phone2.py instead.
 
 Loading events:
 numberOfUsers=3786611
@@ -18,6 +20,7 @@ from sys import stdout
 import numpy
 from time import *
 from collections import deque
+import numpy as np
 
 class PhoneEvent(object):
     defaultStartTime = mktime(strptime("20070101 000000", "%Y%m%d %H%M%S"))
@@ -85,11 +88,6 @@ class PhoneEvent(object):
         return newEvent
 
     def  __str__(self):
-        # Reduce is slow and ugly. join is better.
-        #return reduce(lambda x,y:x+","+y,
-        #              map(str,
-        #                  (self.time,self.fr,self.to,self.duration,
-        #                   int(self.call),int(self.reversed))))
         v = (self.time, self.fr, self.to, self.duration,
              int(self.call), int(self.reversed))
         return ", ".join(map(str, v))
@@ -400,6 +398,9 @@ class PhoneEventsContainer(PhoneEvents):
             # Read in a previously saved numpy.recarray object.
             self.eventData = numpy.load(inputFileName)
             self.numberOfEvents = len(self.eventData)
+            if self.numberOfUsers is None:
+                self.numberOfUsers = max(max(self.eventData['to']),
+                                         max(self.eventData['fr']))
             
     def _addEvent(self, event, eventIndex):
             self.eventData['fr'][eventIndex] = event.fr
@@ -500,3 +501,83 @@ class PhoneEventsContainer(PhoneEvents):
     def __len__(self):
         return len(self.eventData)
 
+
+class UserEventIterator(object):
+    """Class for going through the events of a single user.
+
+    The memory usage of this class is O(n), where n is the number of
+    events.
+    """
+
+    def __init__(self, events):
+        """Initialization.
+
+        Parameters
+        ----------
+        events : PhoneEventsContainer object
+            The events to iterate.
+
+        Notes
+        -----
+        The initialization takes time O(n), where n = len(events).
+        """
+        # Create a linked list for going through the events of a single
+        # user: `next_events[i][0]`, where `i` is event number, tells
+        # which is the next event index where the same user
+        # participated. The index 0 stands for the caller, 1 for the
+        # recipient; check `events` to see which one you want to
+        # follow. If `next_events[i][0|1]` is zero, the last event has
+        # been reached.
+        self.events = events
+        self.next_events = np.zeros((events.numberOfEvents,4),dtype=int)
+
+        # To get started, the array `first_events` tells the first event
+        # for each user, and similarly for `last_events`.
+        self.first_events = np.zeros((events.numberOfUsers,),dtype=int) - 1
+        self.last_events = np.zeros((events.numberOfUsers,),dtype=int) - 1
+
+        for e_i,e in enumerate(events):
+            for ndx, user in ((2,e.fr), (3,e.to)):
+                tmp = self.last_events[user]
+                self.last_events[user] = e_i
+                self.next_events[e_i][ndx] = tmp
+
+        for i,e in enumerate(reversed(events)):
+            e_i = len(events)-i-1
+            for ndx, user in ((0,e.fr), (1,e.to)):
+                tmp = self.first_events[user]
+                self.first_events[user] = e_i
+                self.next_events[e_i][ndx] = tmp
+
+    def next_event(self, user_id, event_id=None):
+        """Return the index of the next event of user `user_id`."""
+        if event_id is None:
+            next = self.first_events[user_id]
+        else:
+            e = self.events[event_id]
+            next = -1
+            if e.fr == user_id:
+                next =  self.next_events[event_id][0]
+            elif e.to == user_id:
+                next = self.next_events[event_id][1]
+        return (None if next == -1 else next)
+        
+    def prev_event(self, user_id, event_id=None):
+        """Return the index of the previous event of user `user_id`."""
+        if event_id is None:
+            prev = self.last_events[user_id]
+        else:
+            e = self.events[event_id]
+            prev = -1
+            if e.fr == user_id:
+                prev =  self.next_events[event_id][2]
+            elif e.to == user_id:
+                prev = self.next_events[event_id][3]
+        return (None if prev == -1 else prev)
+        
+    def user_events(self, user_id):
+        """Iterate through events of a single user."""
+        e_i = self.next_event(user_id)
+        while e_i is not None:
+            yield e_i
+            e_i = self.next_event(user_id, e_i)
