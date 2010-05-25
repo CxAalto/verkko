@@ -8,6 +8,23 @@
    Bins: Bin data into 1-dimensional bins.
    Bins2D: Bin data into 1-dimensional bins.
    normalize(): Divide a sequence by its sum.
+
+
+Note that all 1-d binning methods (Bins.bin_*) can be used either by
+giving the data (generator) as input, or as coroutines. Coroutines are
+used when input data is not given.
+
+Example of giving data as input:
+   bins = binner.Bins(int, 0, 200, 'lin', 10)
+   binned_data = bins.bin_count(data)
+
+Example of coroutine interface:
+   bins = binner.Bins(int, 0, 200, 'lin', 10)
+   bin_counter = bins.bin_count()
+   for x in data:
+       binned_data = bin_counter.send(x)
+   # Calling next() or send(None) returns the current result.
+   binned_data = bin_counter.next()
 """
 
 
@@ -646,9 +663,8 @@ class Bins(object):
             raise DataTypeError("Elements of input data must be sequences"
                                 " with length at least %d." % (N,))
 
-    def bin_count(self, coords):
-        """
-        Bin data and return the number of data points in each bin.
+    def bin_count(self, coords=None):
+        """Bin data and return the number of data points in each bin.
 
         Parameters
         ----------
@@ -667,22 +683,52 @@ class Bins(object):
         ----------
         Raise BinLimitError if any element does not fit into the bins.
         """
-        binCounts = np.zeros(len(self), float)
 
-        for elem in coords:
-            # Check element right here because with bin_count it is
-            # not required to be a sequence.
-            if (elem < self.bin_limits.minValue or
-                elem > self.bin_limits.maxValue):
-                raise BinLimitError("Value %g is not in the interval [%g, %g]."
-                                    % (elem, self.bin_limits.minValue,
-                                       self.bin_limits.maxValue) )
-            curr_bin = self.bin_finder(elem)
-            binCounts[curr_bin] += 1
+        def bin_count_gen():
+            binCounts = np.zeros(len(self), float)
 
-        return binCounts
+            while True:
+                # Return the count so far, get the next element.
+                elem = (yield binCounts)
 
-    def bin_count_divide(self, coords):
+                # Return current result only when next() or send(None)
+                # is called.
+                if elem is None:
+                    continue
+
+                # Check element right here because with bin_count it is
+                # not required to be a sequence.
+                if (elem < self.bin_limits.minValue or
+                    elem > self.bin_limits.maxValue):
+                    raise BinLimitError("Value %g is not in the interval [%g, %g]."
+                                        % (elem, self.bin_limits.minValue,
+                                           self.bin_limits.maxValue) )
+                curr_bin = self.bin_finder(elem)
+                try:
+                    binCounts[curr_bin] += 1
+                except IndexError:
+                    print "IndexError in bin_count."
+                    print ("   Value    %g" % (elem,))
+                    print ("   Interval [%g, %g]" % (self.bin_limits.minValue,
+                                                     self.bin_limits.maxValue))
+                    print ("   curr_bin %d" % (curr_bin,))
+                    raise
+
+        # If coords is given, simply process it and return the
+        # result. Otherwise return the generator iterator so that the
+        # user may send the data. Also advance the generator to the
+        # first yield-statement so that the user may start calling
+        # send(data), and return the generator iterator.
+        bingen = bin_count_gen()
+        bingen.next()
+        if coords is None:
+            return bingen
+        else:
+            for elem in coords:
+                bin_counts = bingen.send(elem)
+            return bin_counts
+
+    def bin_count_divide(self, coords=None):
         """
         Bin data and return the number of data points in each bin
         divided by the bin width.
@@ -704,9 +750,26 @@ class Bins(object):
         ----------
         Raise BinLimitError if any element does not fit into the bins.
         """
-        return self.bin_count(coords)/self.widths
+        def bin_count_divide_gen():
+            bc_gen = self.bin_count()
+            elem = yield
+            while True:
+                elem = (yield bc_gen.send(elem)/self.widths)
 
-    def bin_sum(self, data):
+        bcd_gen = bin_count_divide_gen()
+        bcd_gen.next()
+        if coords is None:
+            return bcd_gen
+        else:
+            # This would work too: 
+            #   "return self.bin_count(coords)/self.widths",
+            # but just to make sure the generator iterator works as it
+            # should, we use it also when `coords` is given:
+            for elem in coords:
+                bin_count_div = bcd_gen.send(elem)
+            return bin_count_div
+
+    def bin_sum(self, data=None):
         """
         Bin data and return the sum of data points in each bin.
 
@@ -731,24 +794,39 @@ class Bins(object):
         Raise BinLimitError if any element does not fit into the bins.
         Raise DataTypeError if data does not consist of pairs. 
         """
-        binValues = np.zeros(len(self), float)
-        binCounts = np.zeros(len(self), float)
+        def bin_sum_gen():
+            binValues = np.zeros(len(self), float)
+            binCounts = np.zeros(len(self), float)
 
-        for elem in data:
-            # Make sure the data is valid.
-            self.__check_data_element(elem, 2)
-            # Find the correct bin and increase count.
-            curr_bin = self.bin_finder(elem[0])
-            binCounts[curr_bin] += 1
-            try:
-                binValues[curr_bin] += elem[1]
-            except IndexError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 2.")
+            while True:
+                elem = (yield np.ma.masked_array(binValues, binCounts == 0))
 
-        return np.ma.masked_array(binValues, binCounts == 0)
+                # Return current result only when next() or send(None)
+                # is called.
+                if elem is None:
+                    continue
 
-    def bin_sum_divide(self, data):
+                # Make sure the data is valid.
+                self.__check_data_element(elem, 2)
+                # Find the correct bin and increase count.
+                curr_bin = self.bin_finder(elem[0])
+                binCounts[curr_bin] += 1
+                try:
+                    binValues[curr_bin] += elem[1]
+                except IndexError:
+                    raise DataTypeError("Elements of input data must be sequences"
+                                        " with length at least 2.")
+
+        bs_gen = bin_sum_gen()
+        bs_gen.next()
+        if data is None:
+            return bs_gen
+        else:
+            for elem in data:
+                bin_sum = bs_gen.send(elem)
+            return bin_sum
+
+    def bin_sum_divide(self, data=None):
         """
         Bin data and return the sum of data points in each bin divided
         by the bin width.
@@ -773,9 +851,22 @@ class Bins(object):
         Raise BinLimitError if any element does not fit into the bins.
         Raise DataTypeError if data does not consist of pairs. 
         """
-        return self.bin_sum(data)/self.widths
-    
-    def bin_average(self, data, variances=False):
+        def bin_sum_divide_gen():
+            bs_gen = self.bin_sum()
+            elem = yield
+            while True:
+                elem = (yield bs_gen.send(elem)/self.widths)
+
+        bsd_gen = bin_sum_divide_gen()
+        bsd_gen.next()
+        if data is None:
+            return bsd_gen
+        else:
+            for elem in data:
+                bin_sum_div = bsd_gen.send(elem)
+            return bin_sum_div
+
+    def bin_average(self, data=None, variances=False):
         """
         Bin data and return the average of data points in each bin. If
         variances = True, return also the variance in each bin.
@@ -807,33 +898,45 @@ class Bins(object):
         Raise BinLimitError if any element does not fit into the bins.
         Raise DataTypeError if data does not consist of pairs. 
         """
-        binValues = np.zeros(len(self), float)
-        binSquares = np.zeros(len(self), float)
-        binCounts = np.zeros(len(self), float)
+        def bin_average_gen(variances):
+            binValues = np.zeros(len(self), float)
+            binSquares = np.zeros(len(self), float)
+            binCounts = np.zeros(len(self), float)
 
-        for elem in data:
-            # Make sure the data is valid.
-            self.__check_data_element(elem, 2)
-            # Find the correct bin.
-            curr_bin = self.bin_finder(elem[0])
-            binCounts[curr_bin] += 1
-            try:
-                binValues[curr_bin] += elem[1]
-                binSquares[curr_bin] += elem[1]**2
-            except IndexError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 2.")
+            while True:
+                binCounts_ma = np.ma.masked_array(binCounts, binCounts == 0)
+                ma_averages = binValues/binCounts_ma
 
-        # Calculate averages as masked array.
-        binCounts = np.ma.masked_array(binCounts, binCounts == 0)
-        ma_averages = binValues/binCounts
-        
-        if variances:
-            return ma_averages, binSquares/binCounts - ma_averages**2
+                if variances:
+                    elem = (yield ma_averages, binSquares/binCounts_ma-ma_averages**2)
+                else:
+                    elem = (yield ma_averages)
+
+                # Return current result only when next() or send(None)
+                # is called.
+                if elem is None:
+                    continue
+
+                # Make sure the data is valid.
+                self.__check_data_element(elem, 2)
+                # Find the correct bin.
+                curr_bin = self.bin_finder(elem[0])
+                binCounts[curr_bin] += 1
+                try:
+                    binValues[curr_bin] += elem[1]
+                    binSquares[curr_bin] += elem[1]**2
+                except IndexError:
+                    raise DataTypeError("Elements of input data must be sequences"
+                                        " with length at least 2.")
+
+        ba_gen = bin_average_gen(variances)
+        ba_gen.next()
+        if data is None:
+            return ba_gen
         else:
-            return ma_averages
-
-
+            for elem in data:
+                ret_val = ba_gen.send(elem)
+            return ret_val
 
     def bin_weighted_average(self, data, variances = False):
         """
@@ -868,67 +971,51 @@ class Bins(object):
         Raise BinLimitError if any element does not fit into the bins.
         Raise DataTypeError if data does not consist of triples. 
         """
-        binValues = np.zeros(len(self), float)
-        binSquares = np.zeros(len(self), float)
-        binCounts = np.zeros(len(self), float)
-        binWeights = np.zeros(len(self), float)
-        
-        for elem in data:
-            # Make sure the data is valid.
-            self.__check_data_element(elem, 3)
-            # Find the correct bin.
-            curr_bin = self.bin_finder(elem[0])
-            binCounts[curr_bin] += 1
-            try:
-                binValues[curr_bin] += elem[1]*elem[2]
-                binSquares[curr_bin] += elem[1]**2 * elem[2]
-                binWeights[curr_bin] += elem[2]
-            except IndexError:
-                raise DataTypeError("Elements of input data must be sequences"
-                                    " with length at least 3.")
+        def bin_weighted_average_gen(variances):
 
-        # Calculate weighted average.
-        binValues = np.ma.masked_array(binValues, binCounts == 0)
-        binWeights[binWeights==0] = 1.0
-        ma_wAverages = binValues/binWeights
+            binValues = np.zeros(len(self), float)
+            binSquares = np.zeros(len(self), float)
+            binCounts = np.zeros(len(self), float)
+            binWeights = np.zeros(len(self), float)
 
-        if variances:
-            return ma_wAverages, binSquares/binWeights - ma_wAverages**2
+            while True:
+                binValues_ma = np.ma.masked_array(binValues, binCounts == 0)
+                binWeights_ma = np.ma.masked_array(binWeights, binWeights==0)
+                averages_ma = binValues_ma/binWeights_ma
+
+                if variances:
+                    elem = (yield averages_ma, binSquares/binWeights_ma-averages_ma**2)
+                else:
+                    elem = (yield averages_ma)
+
+                # Return current result only when next() or send(None)
+                # is called.
+                if elem is None:
+                    continue
+
+                # Make sure the data is valid.
+                self.__check_data_element(elem, 3)
+                # Find the correct bin.
+                curr_bin = self.bin_finder(elem[0])
+                binCounts[curr_bin] += 1
+                try:
+                    binValues[curr_bin] += elem[1]*elem[2]
+                    binSquares[curr_bin] += elem[1]**2 * elem[2]
+                    binWeights[curr_bin] += elem[2]
+                except IndexError:
+                    raise DataTypeError("Elements of input data must be sequences"
+                                        " with length at least 3.")
+
+        bwa_gen = bin_weighted_average_gen(variances)
+        bwa_gen.next()
+        if data is None:
+            return bwa_gen
         else:
-            return ma_wAverages
+            for elem in data:
+                ret_val = bwa_gen.send(elem)
+            return ret_val
 
-    def bin_median(self, data):
-        """
-        Bin data and return the median in each bin.
-
-        Parameters
-        ----------
-        data : iterable
-            The data to be binned. Each element must be a pair (coord,
-            value). The element is then placed into the bin i with
-            bins[i] <= coord < bins[i+1]
-
-        Returns
-        -------
-        binned_data : list of ma.masked_arrays
-            Element binned_data[i] contains the median of all elements
-            that fall into the bin.  The bins with no values are
-            masked. To get a plain list, use binned_data.tolist().
-
-        Exceptions
-        ----------
-        Raise BinLimitError if any element does not fit into the bins.
-        Raise DataTypeError if data does not consist of pairs. 
-
-        Notes
-        -----
-        Finding the median of an arbitrary sequence requires first
-        saving all elements. If the number of data points is very
-        large, this method can take up a large amount of memory.
-        """
-        return self.bin_percentile(data, (0.5,))[0]
-
-    def bin_percentile(self, data, perc=None):
+    def bin_percentile(self, data=None, perc=(0.5,)):
         """
         Bin data and return the median in each bin.
 
@@ -969,45 +1056,103 @@ class Bins(object):
         """
         if not perc: # This covers both None and empty `perc`.
             raise ParameterError("No percentiles given.")
+        perc = sorted(perc)
 
-        perc = sorted(list(perc))
+        def bin_percentile_gen(perc):
+            binElements = [[] for i in range(len(self))]
+            perc_arrays = [np.ma.masked_array(np.zeros(len(self), float),
+                                              np.ones(len(self), float))
+                           for j in range(len(perc))]
 
-        binElements = [[] for i in range(len(self))]
+            while True:
+                # Get next element and return percentiles.
+                elem = (yield perc_arrays)
 
-        for elem in data:
-            # Make sure the data is valid.
-            self.__check_data_element(elem, 2)
-            # Find the correct bin.
-            curr_bin = self.bin_finder(elem[0])
-            # Append the list of elements in the bin. BinLimitError
-            # occurs if bin goes over the top, and DataTypeError
-            # occurs if elem is not a sequence with length at least 2.
-            try:
-                binElements[curr_bin].append(elem[1])
-            except IndexError:
-                if curr_bin > len(self)-1:
-                    raise BinLimitError("Value %g is beyond the upper bin "
-                                        "limit %g." %
-                                        (elem, self.bin_limits.maxValue))
-                else:
-                    raise DataTypeError("Elements of input data must be "
-                                        "sequences with length at least 2.")
+                if elem is None:
+                    continue
 
-        # Sort the data in each bin.
-        for i, elements in enumerate(binElements):
-            binElements[i] = sorted(binElements[i])
+                # Make sure the data is valid.
+                self.__check_data_element(elem, 2)
+                # Find the correct bin.
+                curr_bin = self.bin_finder(elem[0])
+                # Append the list of elements in the bin. BinLimitError
+                # occurs if bin goes over the top, and DataTypeError
+                # occurs if elem is not a sequence with length at least 2.
+                try:
+                    binElements[curr_bin].append(elem[1])
+                except IndexError:
+                    if curr_bin > len(self)-1:
+                        raise BinLimitError("Value %g is beyond the upper bin "
+                                            "limit %g." %
+                                            (elem, self.bin_limits.maxValue))
+                    else:
+                        raise DataTypeError("Elements of input data must be "
+                                            "sequences with length at least 2.")
 
-        # Find percentiles for each bin. If a bin has no values,
-        # data_utils.percentile returns None, which will be turned
-        # into a nan by numpy.
-        perc_arrays = []
-        for p in perc:
-            binPerc = np.zeros(len(self), float)
-            for i, elements in enumerate(binElements):
-                binPerc[i] = data_utils.percentile(elements, p)
-            perc_arrays.append(np.ma.masked_array(binPerc, np.isnan(binPerc)))
+                # Sort the data in the bin that was altered.
+                binElements[curr_bin] = sorted(binElements[curr_bin])
 
-        return perc_arrays
+                # Find the percentiles in the bin that was
+                # altered. Note that if a bin has no values,
+                # data_utils.percentile returns None, which will be
+                # turned into a nan by numpy.
+                for i_p, p in enumerate(perc):
+                    perc_arrays[i_p].mask[curr_bin] = False
+                    perc_arrays[i_p][curr_bin] = data_utils.percentile(binElements[curr_bin], p)
+
+        bp_gen = bin_percentile_gen(perc)
+        bp_gen.next()
+        if data is None:
+            return bp_gen
+        else:
+            for elem in data:
+                ret_val = bp_gen.send(elem)
+            return ret_val
+
+    def bin_median(self, data=None):
+        """
+        Bin data and return the median in each bin.
+
+        Parameters
+        ----------
+        data : iterable
+            The data to be binned. Each element must be a pair (coord,
+            value). The element is then placed into the bin i with
+            bins[i] <= coord < bins[i+1]
+
+        Returns
+        -------
+        binned_data : list of ma.masked_arrays
+            Element binned_data[i] contains the median of all elements
+            that fall into the bin.  The bins with no values are
+            masked. To get a plain list, use binned_data.tolist().
+
+        Exceptions
+        ----------
+        Raise BinLimitError if any element does not fit into the bins.
+        Raise DataTypeError if data does not consist of pairs. 
+
+        Notes
+        -----
+        Finding the median of an arbitrary sequence requires first
+        saving all elements. If the number of data points is very
+        large, this method can take up a large amount of memory.
+        """
+
+        def bin_median_gen():
+            bp_gen = self.bin_percentile(None, (0.5,))
+            elem = yield
+            while True:
+                elem = (yield bp_gen.send(elem)[0])
+
+        bm_gen = bin_median_gen()
+        bm_gen.next()
+        if data is None:
+            return bm_gen
+        else:
+            for elem in data:
+                ret_val = bm_gen.send(elem)
+            return ret_val
 
 class Bins2D(object):
     """ Class for binning 2-dimensional data."""
