@@ -407,7 +407,7 @@ class TestBins(unittest.TestCase):
                     self.assertEqual("%.8f" % r, "%.8f" % er)
 
         # Check exceptions
-        self.assertRaises(binner.ParameterError, self.bins.bin_percentile, data)
+        self.assertRaises(binner.ParameterError, self.bins.bin_percentile, data, None)
         self.assertRaises(binner.DataTypeError, self.bins.bin_percentile, self.coords, (0.1, 0.2))
         self.assertRaises(binner.BinLimitError, self.bins.bin_percentile, self.bad_data_A, (0.1, 0.2))
         self.assertRaises(binner.BinLimitError, self.bins.bin_percentile, self.bad_data_B, (0.1, 0.2))
@@ -581,11 +581,11 @@ if __name__ == '__main__':
     # The if-clause below exists only for debugging; it makes it
     # easier to run only one test instead of all of them. All test
     # will be run when binner.py is executed.
-    if False:
+    if True:
         # Run only one test.
         suite = unittest.TestSuite()
-        #suite.addTest(TestBins("test_0printer"))
-        suite.addTest(TestBins2D("test_Count_divide"))
+        suite.addTest(TestBins("test_Average"))
+        #suite.addTest(TestBins2D("test_Average"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
