@@ -88,11 +88,11 @@ def get_rcParams(fig_width_cm, fig_ratio = 0.8, font_sizes = None):
         The ratio height/width. < 1 is landscape, 1.0 is square and
         > 1.0 is portrait.
     font_sizes: dictionary
-        The font sizes used in the figure. Default is size 8 for
-        everything else expect 10 for the title. Possible keys are
-        'default', 'label', 'title', 'text', 'legend' and 'tick'.
-        'default' is used when the specific value is not defined,
-        other keys should be self explanatory.
+        The font sizes used in the figure. Default is size 10 for the
+        title and 8 for everything else. Possible keys are 'default',
+        'label', 'title', 'text', 'legend' and 'tick'.  'default' is
+        used when the specific value is not defined, other keys should
+        be self explanatory.
     """
     default_font_sizes = {'label':8, 'title':10, 'text':8, 'legend':8, 'tick':8}
     font_sizes = (font_sizes or {})
