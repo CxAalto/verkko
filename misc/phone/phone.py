@@ -44,7 +44,7 @@ matter of minutes:
 
 import os
 from sys import stdout
-import numpy
+import numpy as np
 from time import *
 from collections import deque
 
@@ -277,7 +277,7 @@ class PhoneEvents(object):
         if loopTime:
             dataDuration=max(self.eventData.time)-min(self.eventData.time)
 
-        ieTimes=numpy.zeros(self.numberOfEvents/2,dtype="int32")
+        ieTimes=np.zeros(self.numberOfEvents/2,dtype="int32")
         #for i in range(len(ieTimes)):
         #    ieTimes[i]=-2
 
@@ -351,7 +351,7 @@ class PhoneEventsContainer(PhoneEvents):
             # Initialize record array for event data.
             column_formats = 'uint32,uint32,uint32,uint16,bool,bool,uint32'
             column_names = 'fr,to,time,duration,call,reversed,originalIndex'
-            self.eventData = numpy.recarray(self.numberOfEvents,
+            self.eventData = np.recarray(self.numberOfEvents,
                                             formats=column_formats,
                                             names=column_names)
 
@@ -372,8 +372,8 @@ class PhoneEventsContainer(PhoneEvents):
 
                         lineNumber += 1
         else:
-            # Read in a previously saved numpy.recarray object.
-            self.eventData = numpy.load(inputFileName)
+            # Read in a previously saved np.recarray object.
+            self.eventData = np.load(inputFileName)
             self.numberOfEvents = len(self.eventData)
             if self.numberOfUsers is None:
                 self.numberOfUsers = max(max(self.eventData['to']),
@@ -414,11 +414,11 @@ class PhoneEventsContainer(PhoneEvents):
             raise Exception("Can't shuffle reversed events.")
         if field == None:
             # Shuffle everything
-            numpy.random.shuffle(self.eventData)
+            np.random.shuffle(self.eventData)
         else:
             # Keep field in original order, shuffle everything else.
             orig_col = self.eventData[field].copy()
-            numpy.random.shuffle(self.eventData)
+            np.random.shuffle(self.eventData)
             self.eventData[field] = orig_col
             
 
@@ -470,7 +470,7 @@ class PhoneEventsContainer(PhoneEvents):
         self.numberOfEvents = len(self.eventData)
 
     def saveData(self,fileName):
-        numpy.save(fileName, self.eventData)
+        np.save(fileName, self.eventData)
 
     def __getitem__(self,index):
         return PhoneEvent(record = self.eventData[index])
