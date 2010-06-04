@@ -339,9 +339,10 @@ class PhoneEventsContainer(PhoneEvents):
                 numberOfEvents = 0
                 for fn in inputFileName:
                     numberOfEvents += int(os.popen("wc -l %s"%fn).next().split()[0])
-                print ("Total of %d events found in %d file%s." % 
-                       (numberOfEvents, len(inputFileName),
-                        ("s" if len(inputFileName) > 1 else "")))
+                if verbose:
+                    print ("Total of %d events found in %d file%s." % 
+                           (numberOfEvents, len(inputFileName),
+                            ("s" if len(inputFileName) > 1 else "")))
 
             if reversed:
                 self.numberOfEvents = numberOfEvents*2
