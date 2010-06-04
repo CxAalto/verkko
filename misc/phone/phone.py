@@ -378,7 +378,7 @@ class PhoneEventsContainer(PhoneEvents):
             self.numberOfEvents = len(self.eventData)
             if self.numberOfUsers is None:
                 self.numberOfUsers = max(max(self.eventData['to']),
-                                         max(self.eventData['fr']))
+                                         max(self.eventData['fr']))+1
 
     def _addEvent(self, event, eventIndex):
             self.eventData['fr'][eventIndex] = event.fr
