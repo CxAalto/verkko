@@ -11,14 +11,15 @@
 
 
 Note that all 1-d binning methods (Bins.bin_*) can be used either by
-giving the data (generator) as input, or as coroutines. Coroutines are
-used when input data is not given.
+giving the data (or data iterator) as input, or as
+coroutines. Coroutines are used when input data is not given, and
+single data points are the given with the send()-method.
 
 Example of giving data as input:
    bins = binner.Bins(int, 0, 200, 'lin', 10)
    binned_data = bins.bin_count(data)
 
-Example of coroutine interface:
+Example of the coroutine interface:
    bins = binner.Bins(int, 0, 200, 'lin', 10)
    bin_counter = bins.bin_count()
    for x in data:
@@ -902,13 +903,12 @@ class Bins(object):
             binValues = np.zeros(len(self), float)
             binSquares = np.zeros(len(self), float)
             binCounts = np.zeros(len(self), float)
+            ma_averages = np.ma.masked_array(binCounts.copy(), binCounts == 0)
+            ma_variances = np.ma.masked_array(binCounts.copy(), binCounts == 0)
 
             while True:
-                binCounts_ma = np.ma.masked_array(binCounts, binCounts == 0)
-                ma_averages = binValues/binCounts_ma
-
                 if variances:
-                    elem = (yield ma_averages, binSquares/binCounts_ma-ma_averages**2)
+                    elem = (yield ma_averages, ma_variances)
                 else:
                     elem = (yield ma_averages)
 
@@ -928,6 +928,13 @@ class Bins(object):
                 except IndexError:
                     raise DataTypeError("Elements of input data must be sequences"
                                         " with length at least 2.")
+
+                ma_averages[curr_bin] = binValues[curr_bin]/binCounts[curr_bin]
+                ma_averages.mask[curr_bin] = False
+                if variances:
+                    ma_variances[curr_bin] = (binSquares[curr_bin]/binCounts[curr_bin] 
+                                              - ma_averages[curr_bin]**2)
+                    ma_variances.mask[curr_bin] = False
 
         ba_gen = bin_average_gen(variances)
         ba_gen.next()
