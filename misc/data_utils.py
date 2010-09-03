@@ -258,26 +258,26 @@ def cumulative_dist(data, prob=None, format='descending'):
         counts may be used also instead of probabilities.
     format : string
         If 'descending', the returned cumulative distribution is P(x
-        >= X). If 'ascenting', it will be P(x <= X).
+        >= X). If 'ascending', it will be P(x <= X).
 
     Return
     ------
     (value, cum_prob) : (list, list)
         Data points and their cumulative probabilities. The cumulative
         probability of value[i] is cum_prob[i]. value is sorted in
-        ascenting order.
+        ascending order.
 
     Exceptions
     ----------
-    ValueError : If format is not 'descending' or 'ascenting'.
+    ValueError : If format is not 'descending' or 'ascending'.
     ValueError : If prob != None but its length does not match the
                  length of data.
     """
 
-    # Make sure format is either 'descending' or 'ascenting'.
-    if format not in ('descending', 'ascenting'):
+    # Make sure format is either 'descending' or 'ascending'.
+    if format not in ('descending', 'ascending'):
         raise ValueError("The 'format' parameter must be either "
-                         "'descending' or 'ascenting', got '"+str(format)+"'.")
+                         "'descending' or 'ascending', got '"+str(format)+"'.")
 
     # Check the length of prob.
     if prob is not None and len(prob) != len(data):
