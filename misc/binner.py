@@ -1,8 +1,8 @@
 #!/usr/bin/python2.6
 #
-# Lauri Kovanen, 2009 (lauri.kovanen@gmail.com)
+# Lauri Kovanen, 2009-2011 (lauri.kovanen@gmail.com)
 # Department of Biomedical Engineering and Computational Science
-# Helsinki University of Technology
+# Aalto University School of Science
 """Bin data into 1 or 2-dimensional bins.
 
    Bins: Bin data into 1-dimensional bins.
@@ -236,7 +236,7 @@ class _linlogBinFinder(_binFinder):
     """
 
     def __init__(self, bin_limits):
-        self.bin_limit = np.min(11, bin_limits[-1])
+        self.bin_limit = np.min([11, bin_limits[-1]])
         self.N_lin_bins = int(self.bin_limit - bin_limits[0])
         # Create linear binner if linear bins exist.
         if self.N_lin_bins > 0:
@@ -1280,7 +1280,7 @@ class Bins2D(object):
 
         Returns
         -------
-        binned_data : 2-d array
+        binned_data : 2-d numpy array
             The binned data, where binned_data[i,j] is the number of
             data points that fall into the bin.
 
@@ -1314,7 +1314,7 @@ class Bins2D(object):
 
         Returns
         -------
-        binned_data : 2-d array
+        binned_data : 2-d numpy array
             The binned data, where binned_data[i,j] is the number of
             data points that fall into the bin divided by the bin
             size.
