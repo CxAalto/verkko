@@ -132,16 +132,14 @@ class _linBinFinder(_binFinder):
     Return the correct bin for a given value with linear bins.
 
     If value < bin_limits[0], the returned index is negative, and if
-    value > bin_limits[-1], the returned index is > len(bins)-2.
+    value > bin_limits[-1], the returned index is > len(bins)-2. The
+    right edge of the last bin is included in the last bin.
 
     Parameters
     ----------
     bin_limits : sequence
         The limits of the bins used in binning. If there are N bins,
         len(bin_limits) is N+1.
-    include_right_edge : bool
-        If true, the right edge of the last bin will be included in
-        the last bin.
     value : integer or float
         The value for which the correct bin should be located.
 
@@ -250,7 +248,7 @@ class _linlogBinFinder(_binFinder):
             self.log_bf = None
         
     def __call__(self, value):
-        if value < self.bin_limit:
+        if value < self.bin_limit or self.log_bf is None:
             return self.lin_bf(value)
         elif self.log_bf:
             return self.N_lin_bins + self.log_bf(value)
