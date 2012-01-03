@@ -33,8 +33,7 @@ class __field_converter(object):
             raise IndexError("Column %d not found." % (col,))
         return ret_val
 
-
-def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
+def read_columns(filename, skip_rows, typesORfun=None, columns=None, sep=None, verbose=False, use_headers=False):
     """Read columns of a file into lists.
 
     Read the columns in file `filename` into lists, ignoring the first
@@ -45,13 +44,15 @@ def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
     information from each line.
 
     The first call signature is
-      read_columns(filename, skip_rows, types, columns=None, sep=None)
-    This converts the values in column i to type `types[i]`. By
-    default the len(types) first columns are read, if other columns
-    are desired they must be specified explisitely with the argument
-    'columns'. Note that the first column is 0.
+      read_columns(filename, skip_rows, types=None, columns=None, sep=None)
 
-    Parameters (whit column types)
+    This converts the values in column i to type `types[i]`. By default the
+    len(types) first columns are read, if other columns are desired they must
+    be specified explisitely with the argument 'columns'. Note that the first
+    column is 0. If `types[i]` is not given, it will be interpreted from the
+    first data line in the file.
+
+    Parameters (with column types)
     ----------
     filename : str
         The input file to read.
@@ -65,7 +66,13 @@ def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
         None, the first len(types) columns will be read.
     sep : string
         The column separator, defaults to any whitespace.
-
+    verbose : bool
+        If True, print out a point for every 1 percent read to stderr.
+    use_headers : bool
+        If True, a dictionary will be returned instead of a list. The keys of
+        the dictionary will correspond to the column headers, read from the
+        row `skip_rows`. The header strings cannot contain whitespace, they
+        must be distinct on the columns used and `skip_rows` is not zero.
     
     The second call signature is
       read_columns(filename, skip_rows, fun)
@@ -82,9 +89,12 @@ def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
     fun : function
         Function for processing a single line. fun takes in a list of
         strings (values in each column) and outputs the processed data
-        as a sequence. The n:th list in the output of process_columns
-        will consist of the n:th elements of the outputs of fun.
-
+        as a sequence. The n:th list in the output of read_columns
+        will consist of the n:th elements of the outputs of fun. if
+        `fun` return None, the corresponding row is skipped.
+    verbose : bool
+        If True, print out a point for every 1 percent read to stderr.
+            
     Return
     ------
     data : tuple of lists
@@ -116,8 +126,20 @@ def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
     ...
     >>> sum02, mult13 = read_columns('input.txt', 2, myFun)
     """
+    use_headers = (use_headers and skip_rows)
+    
+    if use_headers:
+        # Read headers from row 'skip_rows'.
+        with open(filename,'rU') as f:
+            for i in range(skip_rows):
+                headers = f.next().split()
+        # Make sure the headers are distinct.
+        headers_used = ([headers[j] for j in columns] if columns else headers)
+        if len(set(headers_used)) != len(headers_used):
+            raise ValueError("Headers on the columns chosen are not distinct.")
+    
     # Initialize data generator.
-    data_gen = gen_columns(filename, skip_rows, typesORfun, columns, sep)
+    data_gen = gen_columns(filename, skip_rows, typesORfun, columns, sep, verbose)
 
     # Get first columns to find out the number of colums.
     first_cols = data_gen.next()
@@ -128,10 +150,15 @@ def read_columns(filename, skip_rows, typesORfun, columns=None, sep=None):
         for i, c in enumerate(cols):
             data[i].append(c)
 
+    if use_headers:
+        if columns:
+            data = dict((headers[i],data[i]) for i in columns)
+        else:
+            data = dict(zip(headers,data))
     return data
 
 
-def gen_columns(filename, skip_rows, typesORfun, columns = None, sep=None):
+def gen_columns(filename, skip_rows, typesORfun=None, columns=None, sep=None, verbose=False):
     """Generate column data from a file.
 
     This function works exactly as read_columns, but instead of
@@ -166,12 +193,28 @@ def gen_columns(filename, skip_rows, typesORfun, columns = None, sep=None):
     >>> for (col1, col4) in gen_columns('input.txt', 2, (int, float), (1,4)):
             print '%d: %d' % (col1, col4) 
     """
-    # Open file and read through headers. If `filename` does not
-    # exist, IOError will be raised.
-    f = open(filename, 'rU')
-    for i in range(skip_rows):
-        f.next()
-
+    if typesORfun is None:
+        # Try to interpret types from the first data line.
+        with open(filename,'rU') as f:
+            for i in range(skip_rows):
+                f.next()
+            fields = f.next().split()
+        typesORfun = []
+        for i in (columns or range(len(fields))):
+            try:
+                val = int(fields[i])
+                typesORfun.append(int)
+                continue
+            except ValueError:
+                pass
+            try:
+                val = float(fields[i])
+                typesORfun.append(float)
+                continue
+            except ValueError:
+                pass
+            typesORfun.append(str)
+                        
     if hasattr(typesORfun, '__getitem__'):
         # `typesORfun` argument is a sequence of types. Create a
         # callable class for conversions.
@@ -182,7 +225,15 @@ def gen_columns(filename, skip_rows, typesORfun, columns = None, sep=None):
     else:
         raise ValueError("Unidentified input values.")
 
-    for line_no, line in enumerate(f):
+    # Initialize iterator depending on whether dots need to be drawn.
+    if verbose:
+        reader = progress_reader(filename, skip_rows=skip_rows)
+    else:
+        reader = open(filename,'rU')
+        for i in range(skip_rows):
+            reader.next()
+            
+    for line_no, line in enumerate(reader):
         try:
             fun_output = fun(line.split())
         except ValueError as er:
@@ -205,7 +256,8 @@ def gen_columns(filename, skip_rows, typesORfun, columns = None, sep=None):
         yield fun_output
 
     # Close the input file.
-    f.close()
+    if not verbose:
+        reader.close()
         
 
 def percentile(data, p):
@@ -229,7 +281,7 @@ def percentile(data, p):
         an integer, otherwise x will be between two data values. If
         data is empty, returns None
     """
-    if not data:
+    if not len(data):
         return None # data = []
     
     i = float(p)*(len(data)-1)
@@ -262,7 +314,7 @@ def cumulative_dist(data, prob=None, format='descending'):
 
     Return
     ------
-    (value, cum_prob) : (list, list)
+    value, cum_prob : (list, list)
         Data points and their cumulative probabilities. The cumulative
         probability of value[i] is cum_prob[i]. value is sorted in
         ascending order.
@@ -303,12 +355,36 @@ def cumulative_dist(data, prob=None, format='descending'):
 
     # Create cumulative distribution.
     cum_prob = np.cumsum(prob)
+    cum_prob[-1] = 1 # Force this to be exactly 1.
     if format == 'descending':
         cum_prob = list(1 - cum_prob)
         cum_prob = [1] + cum_prob[:-1]
 
-    return (list(data), list(cum_prob))
+    return list(data), list(cum_prob)
 
+def progress_reader(fileName, output=sys.stderr, nof_dots=100, skip_rows=0):
+    """Iterate through a file with automatic progress bar to `output`."""
+    nof_lines = 0
+    with open(fileName,'r') as f:
+        for line in f:
+            nof_lines += 1
+    drawDotAt = int((nof_lines-skip_rows)/float(nof_dots))
+    line_counter = 0
+    with open(fileName,'rU') as f:
+        for i in range(skip_rows):
+            f.next()
+        for line in f:
+            line_counter += 1
+            if (line_counter == drawDotAt):
+                output.write('.')
+                line_counter = 0
+            yield line
+    output.write('\n')
+
+def read_data(fileName, skip_rows=1):
+    """The simplest call to read_columns."""
+    return read_columns(fileName, skip_rows, verbose=True, use_headers=True)
+    
 if __name__ == '__main__':
     """Run unit tests if called."""
     from tests.test_data_utils import *
