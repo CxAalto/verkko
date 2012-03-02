@@ -310,26 +310,26 @@ def cumulative_dist(data, prob=None, format='descending'):
         counts may be used also instead of probabilities.
     format : string
         If 'descending', the returned cumulative distribution is P(x
-        >= X). If 'ascending', it will be P(x <= X).
+        >= X). If 'ascenting', it will be P(x <= X).
 
     Return
     ------
     value, cum_prob : (list, list)
         Data points and their cumulative probabilities. The cumulative
         probability of value[i] is cum_prob[i]. value is sorted in
-        ascending order.
+        ascenting order.
 
     Exceptions
     ----------
-    ValueError : If format is not 'descending' or 'ascending'.
+    ValueError : If format is not 'descending' or 'ascenting'.
     ValueError : If prob != None but its length does not match the
                  length of data.
     """
 
-    # Make sure format is either 'descending' or 'ascending'.
-    if format not in ('descending', 'ascending'):
+    # Make sure format is either 'descending' or 'ascenting'.
+    if format not in ('descending', 'ascenting'):
         raise ValueError("The 'format' parameter must be either "
-                         "'descending' or 'ascending', got '"+str(format)+"'.")
+                         "'descending' or 'ascenting', got '"+str(format)+"'.")
 
     # Check the length of prob.
     if prob is not None and len(prob) != len(data):
@@ -362,24 +362,52 @@ def cumulative_dist(data, prob=None, format='descending'):
 
     return list(data), list(cum_prob)
 
-def progress_reader(fileName, output=sys.stderr, nof_dots=100, skip_rows=0):
-    """Iterate through a file with automatic progress bar to `output`."""
+def progress(iterable, length=None, callback=None, finalize=None, n=100):
+    """Add progress counter to iteration.
+
+    Parameters
+    ----------
+    callback : function
+       The function to call every time a progress should be output. If
+       None (default), the progress is marked by printing dots to
+       stderr. The callback function takes no arguments.
+    finalize : function
+       The function to call after the last line has been read.  If
+       None (default), a line break is printed at stdout after the
+       last line.  The finalize function takes no arguments.
+    """
+    if length is None:
+        length = len(iterable)
+    if callback is None:
+        callback = lambda: sys.stderr.write('.')
+    if finalize is None:
+        finalize = lambda: sys.stderr.write('\n')
+
+    increment = float(n)/length
+    counter = 0.0
+    for elem in iterable:
+        counter += increment
+        while counter > 1.0:
+            callback()
+            counter -= 1.0
+        yield elem
+    finalize()
+
+def progress_reader(fileName, callback=None, finalize=None, nof_dots=100):
+    """Iterate through a file with automatic progress markers."""
+    if callback is None:
+        callback = lambda: sys.stderr.write('.')
+    if finalize is None:
+        finalize = lambda: sys.stderr.write('\n')
+
     nof_lines = 0
-    with open(fileName,'r') as f:
+    with open(fileName,'rU') as f:
         for line in f:
             nof_lines += 1
-    drawDotAt = int((nof_lines-skip_rows)/float(nof_dots))
-    line_counter = 0
+
     with open(fileName,'rU') as f:
-        for i in range(skip_rows):
-            f.next()
-        for line in f:
-            line_counter += 1
-            if (line_counter == drawDotAt):
-                output.write('.')
-                line_counter = 0
+        for line in progress(f, nof_lines, callback, finalize, nof_dots):
             yield line
-    output.write('\n')
 
 def read_data(fileName, skip_rows=1):
     """The simplest call to read_columns."""

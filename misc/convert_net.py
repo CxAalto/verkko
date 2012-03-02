@@ -8,9 +8,10 @@ supported formats below. net.in must be in format F_IN, and the output
 will be written to stdout with format F_OUT.
 
 If the last parameter is 'mutual', only edges that go both ways will
-be included; the weight will be the average of the two weights. (The
-default behaviour is to sum the weights of edges that occur multiple
-times.)
+be included.
+
+If the same edge is encountered multiple times, the edge weight will
+be the sum of all weights.
 
 Currently supported input formats : edg
 Currently supported output formats: edg, mat, gml, net (pajek)
@@ -44,5 +45,7 @@ if __name__ == '__main__':
     mE = (True if behaviour == 'mutual' else False)
 
     # Read in the network and write it out.
-    netio.writeNet(netio.loadNet(sys.stdin, fileType=inputFormat, numerical=True, mutualEdges=mE),
+    netio.writeNet(netio.loadNet(sys.stdin, fileType=inputFormat, 
+                                 numerical=True, mutualEdges=mE,
+                                 allowSelfEdges=False),
                    sys.stdout, fileType=outputFormat)

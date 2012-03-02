@@ -5,6 +5,7 @@ import os
 import pylab
 import matplotlib.ticker as ticker
 import numpy as np
+import binner_noCoroutines as binner
 
 def savefig(fig, name, extensions=None, verbose=False):
     """Save figure.
@@ -65,7 +66,11 @@ def savefig(fig, name, extensions=None, verbose=False):
                     sys.stderr.write("Problem saving '%s'.\n" % (ext,))
         elif ext != 'pdf':
             # fig.savefig raises a ValueError if the extension is not identified.
-            fig.savefig(name + "." + ext)
+            #
+            # According to "http://stackoverflow.com/questions/4581504/how-to-set-
+            # opacity-of-background-colour-of-graph-wit-matplotlib" it is necessary
+            # to set the face- and edgecolor again!.
+            fig.savefig(name + "." + ext, dpi=300)
 
     if pdf_generated:
         if 'pdf' in extensions:
@@ -178,8 +183,7 @@ class SelectiveScalarFormatter(ticker.ScalarFormatter):
 
 
 class DivisorFormatter(ticker.FormatStrFormatter):
-    """Divide all numbers by a constant.
-    """
+    """Divide all numbers by a constant."""
     def __init__(self, fmt, divisor=None):
         if divisor == None:
             self.divisor = 1
@@ -191,3 +195,156 @@ class DivisorFormatter(ticker.FormatStrFormatter):
         return ticker.FormatStrFormatter.__call__(self, int(1.0*val/self.divisor), pos)
 
 
+def distribution_2d(ax, bins, data, log_scaling=True, plot_average=True):
+    """Plot a 2-dimensional distribution P(Y|X)
+
+    Parameters
+    ----------
+    ax : pylab.axes
+       The axis object where the distribution is drawn.
+    bins : binner.Bins2D
+       The 2-D bins to use for binning.
+    data : (x,y)-points, iterable
+       The data points to plot. If `plot_average` is true, this must
+       be a sequence (iterable is not enough).
+    log_scaling : bool
+       If true, the colors that denote probabilities will be scaled
+       logarithmically. (This is usually a good idea.)
+    plot_average : bool
+       If true, the average value will be drawn with black line (if
+       x-values are floats) or with black dots (if x-values are
+       integers).
+    """
+
+    # Get binned data for the distribution
+    binned_data = bins.bin_count_divide(data)
+
+    # Create coordinates and create an array from the data
+    X, Y = bins.edge_grids
+    Z = np.array(binned_data, float)
+    Z = np.ma.masked_array(Z, Z==0)
+
+    # Normalize each weight bin separately.
+    for j in range(len(Z)):
+        row_sum = np.sum(Z[j])
+        if row_sum:
+            Z[j] = Z[j]/np.sum(Z[j])
+    Z = np.transpose(Z)
+        
+    # Plot
+    if log_scaling:
+        norm = pylab.matplotlib.colors.LogNorm()
+    else:
+        norm = pylab.matplotlib.colors.Normalize()
+    im = ax.pcolor(X, Y, Z, norm=norm)
+
+    # Set scaling based on the bins used.
+    if isinstance(bins.x_bin_finder, binner._logBinFinder):
+        ax.set_xscale("log")
+    if isinstance(bins.y_bin_finder, binner._logBinFinder):
+        ax.set_yscale("log")
+
+    # Set axis limits to correspond to bin limits
+    ax.axis((bins.bin_limits[0][0], bins.bin_limits[0][-1],
+             bins.bin_limits[1][0], bins.bin_limits[1][-1]))
+
+    if plot_average:
+        # Create bins for the average. The first line creates a dummy
+        # binner; the intestines are then changed to those in `bins`
+        # on the next two lines.
+        avg_bins = binner.Bins(int, 0, 10, 'lin', 1) # Dummy
+        avg_bins.bin_limits = bins.bin_limits[0]
+        avg_bins.bin_finder = bins.x_bin_finder
+        binned_avg = avg_bins.bin_average(data)
+        if avg_bins.bin_limits.dataType == 'int':
+            plot_type = 'ko'
+        else:
+            plot_type = 'k-,'
+        ax.plot(avg_bins.centers, binned_avg, plot_type, lw=1.0)
+
+    return im
+
+def scatter_2d(ax, bins, data, log_scaling=True, draw_diagonal=False):
+    """Plot a binned scatter plot.
+
+    Parameters
+    ----------
+    ax : pylab.axes
+       The axis object where the distribution is drawn.
+    bins : binner.Bins2D
+       The 2-D bins to use for binning.
+    data : (x,y)-points, iterable
+       The data points to plot.
+    log_scaling : bool
+       If true, the colors that denote probabilities will be scaled
+       logarithmically. (This is usually a good idea.)
+    draw_diagonal : bool
+       If true, the diagonal line is draws on top of the plot.
+    """
+
+    # Get binned data for the distribution
+    binned_data = bins.bin_count_divide(data)
+
+    # Create coordinates and create an array from the data
+    X, Y = bins.edge_grids
+    Z = np.array(binned_data, float)
+    Z = np.ma.masked_array(Z, Z==0)
+
+    # Normalize the data as a whole.
+    Z = Z/Z.sum()
+    Z = np.transpose(Z)
+        
+    # Plot
+    if log_scaling:
+        norm = pylab.matplotlib.colors.LogNorm()
+    else:
+        norm = pylab.matplotlib.colors.Normalize()
+    im = ax.pcolor(X, Y, Z, norm=norm)
+
+    # Set scaling based on the bins used.
+    if isinstance(bins.x_bin_finder, binner._logBinFinder):
+        ax.set_xscale("log")
+    if isinstance(bins.y_bin_finder, binner._logBinFinder):
+        ax.set_yscale("log")
+
+    # Set axis limits to correspond to bin limits
+    ax.axis((bins.bin_limits[0][0], bins.bin_limits[0][-1],
+             bins.bin_limits[1][0], bins.bin_limits[1][-1]))
+
+    if draw_diagonal:
+        v_ax = ax.axis()
+        ax.plot(v_ax[0:2], v_ax[2:], 'k-', lw=1.0)
+
+    return im
+
+    
+def pretty_number(x):
+    """Turn integer into a pretty string.
+    
+    Make a pretty number by adding extra spaces between every three
+    digits. The LaTeX environment must be active.
+    
+    Parameters
+    ----------
+    x : int
+       The integer to print.
+
+    Returns
+    -------
+    s : str
+       String representation of the integer.
+    """
+
+    if isinstance(x,float):
+        return r"$%.2f$" % x
+
+    s_tmp = str(abs(x))
+    s = ""
+    while s_tmp:
+        if len(s_tmp) > 3:
+            s = r"\,"+s_tmp[-3:]+s
+            s_tmp = s_tmp[:-3]
+        else:
+            s = ("-" if x<0 else "")+s_tmp+s
+            break
+    return r"$%s$" % s

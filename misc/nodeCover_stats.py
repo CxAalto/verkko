@@ -16,6 +16,19 @@ font_sizes = (7,8,7,7,7)
 print_titles = True
 save_formats = ['png']
 
+def print_statistics(nc, ncName, net=None):
+    """Print statistics about the node cover and the network."""
+    with open(ncName + "_stats.txt", 'w') as f:
+        f.write("Node cover file:\n")
+        f.write(sys.argv[1] + "\n\n")
+        if net:
+            f.write("Network file:\n")
+            f.write(sys.argv[3] + "\n\n")
+
+        f.write("Number of communities:   %d\n" % len(nc))
+        f.write("Largest community size:  %d nodes\n" % nc.getGiantSize())
+        f.write("Smallest community size: %d nodes\n" % nc.getCommunitySizes()[-1])
+
 def plot_avgCommWeight(nc, ncName, net):
     """Plot average weight of communities."""
 
@@ -111,6 +124,7 @@ def plot_all(nc, ncName, net=None):
     net : pynet.SymmNet
         The network under `nc`.
     """
+    print_statistics(nc, ncName, net)
     plot_commSizeDist(nc, ncName)
     if net is not None:
         plot_avgCommWeight(nc, ncName, net)

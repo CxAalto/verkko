@@ -52,8 +52,8 @@ net=netio.loadNet(full_net_edg)
 print 'Full net read. Reading communities, doing analysis and writing to file...'
 
 # Read component nodes list, arg 2
-f=open(comp_nodes_list)
-communities=f.readlines()
+f = open(comp_nodes_list)
+communities = f.readlines()
 f.close()
 
 # make: n_nodes <> n_comommunities from arg 2
@@ -70,13 +70,9 @@ for line in communities:
         n_comsort[n_nodessort.index(N)] += 1
 
 # Sort and update
-n_nodes= [] # Final containers
-n_com = []
-for e in n_nodessort:
-    n_nodes.append(e)
-n_nodes.sort()
-for e in n_comsort:
-    n_com.append(1)
+n_nodes = sorted(n_nodesort) # Final containers
+n_com = [1 for e in n_comsort]
+
 for es in n_nodes:
     for ens in n_nodessort:
         if (es == ens):
@@ -86,9 +82,9 @@ for es in n_nodes:
             break
 
 
-#for each community, get the subnet and do the analysis
-cont_length = len(n_nodes) # number of different com. sizes
-cont_rho = np.zeros(cont_length, float) #containers of the different averages for the com. sizes
+# For each community, get the subnet and do the analysis
+cont_length = len(n_nodes) # Number of different com. sizes
+cont_rho = np.zeros(cont_length, float) # Containers of the different averages for the com. sizes
 cont_w = np.zeros(cont_length, float)
 cont_q = np.zeros(cont_length, float)
 cont_I = np.zeros(cont_length, float)
