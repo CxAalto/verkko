@@ -19,21 +19,21 @@ Python 3 does not even allow mixed use of tabs and spaces)
 
 ### Imports
 1. Put imports on separate lines:
-	-Yes:
+	* Yes:
 
 ```python
 	import sys
 	import os
 ```
 
-	-No:
+	* No:
 
 ```python
 	import sys, os
 ```
 
 2. Wildcards imports are **NOT** preferred:
-	- However, from `pylab import *` might not be always that dangerous.
+	* However, from `pylab import *` might not be always that dangerous.
 
 
 ### Comments
@@ -51,7 +51,9 @@ Constants (on the module level):
 	- All capital letters with underscores, e.g., "VALUE_OF_PI"
 
 ### Documenting code
+
 #### Docstrings:
+
 Use one-liners for really obvious cases:
 
 ```python
@@ -61,7 +63,7 @@ Use one-liners for really obvious cases:
 ```
 
 Multiline docstrings:
-	- First one line summary, then more elaborate description, if necessary.
+	* First one line summary, then more elaborate description, if necessary.
 
 ```python
 def complex(real=0.0, imag=0.0):
