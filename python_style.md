@@ -1,3 +1,5 @@
+# Python style and documentation guide for the group code-library
+
 We try to follow the PEP [style](http://legacy.python.org/dev/peps/pep-0008/), 
 and [docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines, of which the following are modified excerpts.
 
@@ -6,8 +8,6 @@ The reason for aiming to proper style and documentation is the following:
 > Code is read much more often than it is written.
 > Thus readability counts.
 
-
-Some main conventions
 
 ### Use 4 spaces!
 Python 3 does not even allow mixed use of tabs and spaces)
@@ -18,15 +18,15 @@ Python 3 does not even allow mixed use of tabs and spaces)
 
 
 ### Imports
-1. Put imports on separate lines:
-	* Yes
+Put imports on separate lines:
+* Yes
 
 ```python
 import sys
 import os
 ```
 
-	* No
+* No
 
 ```python
 import sys, os
