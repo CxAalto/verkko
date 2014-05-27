@@ -56,7 +56,9 @@ Docstrings:
 		```
 	- Multiline docstrings:
 		- First one line summary, then more elaborate description, if necessary.
-```def complex(real=0.0, imag=0.0):
+
+```python
+def complex(real=0.0, imag=0.0):
     """Form a complex number.
 
     Keyword arguments:
@@ -68,5 +70,4 @@ Docstrings:
     """
     if imag == 0.0 and real == 0.0:
         return complex_zero
-    ...
 ```
