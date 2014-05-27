@@ -20,14 +20,14 @@ Python 3 does not even allow mixed use of tabs and spaces)
 ##### Imports
 1. Put imports on separate lines:
 	-Yes:
-		```python
-			import sys
-			import os
-		```
+```python
+	import sys
+	import os
+```
 	-No:
-		```python
-			import sys, os
-		```
+```python
+	import sys, os
+```
 2. Wildcards imports are **NOT** preferred:
 	- However, from `pylab import *` might not be always that dangerous.
 
@@ -41,7 +41,7 @@ Modules:
 Class names:
 	- CapWords, such as `MyClass`
 Function names:
-	- lowercase words separated with underscores, e.g., "my_great_func()"
+	- lowercase words separated with underscores, e.g., `my_great_func()`
 
 Constants (on the module level):
 	- All capital letters with underscores, e.g., "VALUE_OF_PI"
@@ -56,18 +56,17 @@ Docstrings:
 		```
 	- Multiline docstrings:
 		- First one line summary, then more elaborate description, if necessary.
-		- 
-		```def complex(real=0.0, imag=0.0):
-			    """Form a complex number.
+```def complex(real=0.0, imag=0.0):
+    """Form a complex number.
 
-			    Keyword arguments:
-			    real -- the real part (default 0.0)
-			    imag -- the imaginary part (default 0.0)
+    Keyword arguments:
+    real -- the real part (default 0.0)
+    imag -- the imaginary part (default 0.0)
 
-			    Returns:
-			    
-			    """
-			    if imag == 0.0 and real == 0.0:
-			        return complex_zero
-			    ...
-	    ````
+    Returns:
+    
+    """
+    if imag == 0.0 and real == 0.0:
+        return complex_zero
+    ...
+```
