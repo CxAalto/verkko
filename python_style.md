@@ -42,14 +42,14 @@ Please comment your code reasonably.
 
 ### Naming conventions
 Modules:
-	* Short lowercase, like `plots.py`
+* Short lowercase, like `plots.py`
 Class names:
-	* CapWords, such as `MyClass`
+* CapWords, such as `MyClass`
 Function names:
-	* lowercase words separated with underscores, e.g., `my_great_func()`
+* lowercase words separated with underscores, e.g., `my_great_func()`
 
 Constants (on the module level):
-	* All capital letters with underscores, e.g., `VALUE_OF_PI`
+* All capital letters with underscores, e.g., `VALUE_OF_PI`
 
 ### Documenting code
 
