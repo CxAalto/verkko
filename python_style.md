@@ -1,7 +1,6 @@
 # Python style and documentation guide for the group code-library
 
-We try to follow the PEP [style](http://legacy.python.org/dev/peps/pep-0008/), 
-and [docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines, of which the following are modified excerpts.
+We try to follow the PEP [style](http://legacy.python.org/dev/peps/pep-0008/) and [docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines, of which the following are modified excerpts.
 
 The reason for aiming to proper style and documentation is the following:
 
@@ -64,7 +63,7 @@ Constants (on the module level):
 Use one-liners for really obvious cases:
 
 ```python
-def return(x, y):
+def sum(x, y):
 	""" Return the sum of x and y."""
 	return x + y
 ```
