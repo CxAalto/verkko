@@ -21,13 +21,12 @@ Python 3 does not even allow mixed use of tabs and spaces)
 Put imports on separate lines:
 
 * Yes
+```python
+import sys
+import os
+```
 
-	```python
-	import sys
-	import os
-	```
-
-* 
+*  No
 
 ```python
 import sys, os
@@ -58,9 +57,9 @@ Constants (on the module level):
 Use one-liners for really obvious cases:
 
 ```python
-	def return(x, y):
-		""" Return the sum of x and y."""
-		return x + y
+def return(x, y):
+	""" Return the sum of x and y."""
+	return x + y
 ```
 
 Multiline docstrings:
