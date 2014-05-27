@@ -9,15 +9,15 @@ The reason for aiming to proper style and documentation is the following:
 
 Some main conventions
 
-##### Use 4 spaces!
+### Use 4 spaces!
 Python 3 does not even allow mixed use of tabs and spaces)
 
-##### Limit lines to 79 characters
+### Limit lines to 79 characters
 - Possible to have multiple source code windows open at the same time
 - Easier comparison with code difference tools
 
 
-##### Imports
+### Imports
 1. Put imports on separate lines:
 	-Yes:
 ```python
@@ -32,10 +32,10 @@ Python 3 does not even allow mixed use of tabs and spaces)
 	- However, from `pylab import *` might not be always that dangerous.
 
 
-##### Comments
+### Comments
 Please comment your code reasonably.
 
-##### Naming conventions
+### Naming conventions
 Modules:
 	- Short lowercase, like `plots.py`
 Class names:
@@ -46,14 +46,14 @@ Function names:
 Constants (on the module level):
 	- All capital letters with underscores, e.g., "VALUE_OF_PI"
 
-##### Documenting code
+### Documenting code
 Docstrings:
 	- Use one-liners for really obvious cases, such as
-		```python
-			def return(x, y):
-				""" Return the sum of x and y."""
-				return x + y
-		```
+```python
+	def return(x, y):
+		""" Return the sum of x and y."""
+		return x + y
+```
 	- Multiline docstrings:
 		- First one line summary, then more elaborate description, if necessary.
 
@@ -66,7 +66,7 @@ def complex(real=0.0, imag=0.0):
     imag -- the imaginary part (default 0.0)
 
     Returns:
-    
+    complex -- a complex number
     """
     if imag == 0.0 and real == 0.0:
         return complex_zero
