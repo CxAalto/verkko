@@ -19,17 +19,17 @@ Python 3 does not even allow mixed use of tabs and spaces)
 
 ### Imports
 1. Put imports on separate lines:
-	* Yes:
+	* Yes
 
 ```python
-	import sys
-	import os
+import sys
+import os
 ```
 
-	* No:
+	* No
 
 ```python
-	import sys, os
+import sys, os
 ```
 
 2. Wildcards imports are **NOT** preferred:
