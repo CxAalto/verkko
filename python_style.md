@@ -21,6 +21,7 @@ Python 3 does not even allow mixed use of tabs and spaces)
 Put imports on separate lines:
 
 * Yes
+
 ```python
 import sys
 import os
