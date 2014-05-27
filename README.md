@@ -31,6 +31,7 @@ About code versioning
 1. The underlying idea is that all code in the main directories should be backwards compatible. 
 2. If need for "rewriting" a function exists, the new version number should be added to the end of the name:
 
+
 | Old:     | New:          |
 | -------- | ------------- |
 | verkko   | verkko_v2.py  |
