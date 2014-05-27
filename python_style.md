@@ -49,6 +49,7 @@ Constants (on the module level):
 ### Documenting code
 Docstrings:
 	- Use one-liners for really obvious cases, such as
+
 ```python
 	def return(x, y):
 		""" Return the sum of x and y."""
