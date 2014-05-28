@@ -37,9 +37,41 @@ Wildcards imports are **NOT** preferred:
 
 
 ### Comments
-Please comment your code reasonably.
+Please comment your code reasonably and smartly.  You don't need to make
+something for every single line:
+
+    for comm in part1:        # for each community
+        size += len(comm)     # calculate total size
+
+If you use good names and code structure, code is almost
+self-documenting at the line level (when it's not, *then* have line
+comments).  Instead, consider comments as your abstract or
+introduction, explaining higher level logic:
+
+    # Find sum of community size: different from total graph size because
+    # of overlaps.
+    for comm in part1:     # for each community
+        size += len(comm)  # calculate total size
+
+or
+
+    # Max jaccard score, return (J, best_name) tuple
+    max( (J(a, b), bname) for bname, b in b.iteritems() )
+
+Use organization, function names, docstrings, and comments, and
+spacing all to make your code easily understandable.
+
 
 ### Naming conventions
+
+Spend a few seconds to come up with good names before writing, it will
+go a long way to making code organized later.  One of the most clever
+pieces of advice I have read was "program with an open thesaurus" to
+find the perfect names for modules, functions, variables, and so on.
+Another thing people say is to think up a metaphor for what you are
+programming, and use that for picking good names.
+
+
 Modules:
 
 * Short lowercase, like `plots.py`
@@ -85,3 +117,19 @@ def complex(real=0.0, imag=0.0):
     if imag == 0.0 and real == 0.0:
         return complex_zero
 ```
+
+Here is a quick checklist to help you write a docstring quickly.  Not
+everything listed is needed for every function, just use this as an
+idea list, not a checklist.  Start with the most important things, and
+if the code becomes popular others will improve it as they review and
+use the code.
+
+ * One line imperative sentence describing what the function does.
+   "Find the best match community", "Add legend to plot", "Calculate
+   burstiness of time sequence array" (most important)
+ * Any assumptions made.
+ * Meaning of each input argument
+ * Output arguments.
+ * Time and memory complexity, if nontrivial.
+
+
