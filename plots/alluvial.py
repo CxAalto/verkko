@@ -184,6 +184,7 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
 
 def _plot_ribbon_using_bezier(ax, zorder, points1, points2, color1="gray",
                               color2="gray", lw=1):
+    """ Draw ribbon for alluvial diagram (see plot_alluvial)"""
     cc = ColorConverter()
     color1 = np.array(cc.to_rgba(color1))
     color2 = np.array(cc.to_rgba(color2))
