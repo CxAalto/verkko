@@ -77,7 +77,6 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
     module_y_starts_1_and_2 = [[], []]
     #plot modules
     for i, iteration_data in enumerate(iteration_list):
-        print i
         module_sizes, module_colors, stable_ribbon_sizes = iteration_data
         module_y_starts = module_y_starts_1_and_2[i]
         current_y = vertical_pad_up_and_below
