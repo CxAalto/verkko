@@ -33,11 +33,12 @@ import sys, os
 ```
 
 Wildcards imports are **NOT** preferred:
+
 * However, from `pylab import *` might not be always that dangerous.
 
 
 ### Comments
-Please comment your code reasonably and smartly.  You don't need to make
+Please comment your code reasonably and smartly.  You **don't** need to make
 something for every single line:
 
     for comm in part1:        # for each community
@@ -93,6 +94,7 @@ Constants (on the module level):
 #### Docstrings:
 
 Use one-liners for really obvious cases:
+
 
 ```python
 def sum(x, y):
