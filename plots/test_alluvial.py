@@ -1,4 +1,6 @@
 """ A module for testing/demonstrating the use of the alluvial.py module """
+import os
+
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot as plt
@@ -49,7 +51,8 @@ plot_alluvial(
 #  minimal setup
 plot_alluvial(ax2, ribbon_size_matrix)
 
-fname =  __file__.split("/")[0]+"/gallery/alluvial_example.pdf"
+fname =  os.path.join(os.path.dirname(__file__),
+                      "gallery/alluvial_example.pdf")
 
 #save fig to gallery
 plt.savefig(fname, format='pdf')
