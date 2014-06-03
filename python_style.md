@@ -1,6 +1,9 @@
 # Python style and documentation guide for the group code-library
 
-We try to follow the PEP [style](http://legacy.python.org/dev/peps/pep-0008/) and [docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines, of which the following are modified excerpts.
+We try to follow the PEP
+[style](http://legacy.python.org/dev/peps/pep-0008/) and
+[docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines,
+of which the following are modified excerpts with minor modifications.
 
 The reason for aiming to proper style and documentation is the following:
 
@@ -15,6 +18,25 @@ Python 3 does not even allow mixed use of tabs and spaces)
 * Possible to have multiple source code windows open at the same time
 * Easier comparison with code difference tools
 
+### Spacing
+
+Use spacing to make code easy to read and beautiful.  Don't cram
+everything into one line:
+
+    a=1+2+(5*6*7)                # bad
+    a = 1 + 2 + (5*6*7)          # better - spaces are guide for eyes
+    if a == b  or  c in (5,6):   # spacing helps parse
+        ....
+
+
+Parallelism is important, too, it makes it easier to read.  For
+example:
+
+   first  = 1   # extra space so that it lines up
+   second = 2
+
+   if a == 'const_1':     b    += 1
+   if a == 'const_other': cval += 1
 
 ### Imports
 Put imports on separate lines:

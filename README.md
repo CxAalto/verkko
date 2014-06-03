@@ -25,13 +25,13 @@ Structure of the repository:
 
 * u:
     - Personal general purpose code, without testing or
-    backwards-compatability requirements.  Used for things too
+    backwards-compatibility requirements.  Used for things too
     specific to be worth refining, but should be somewhere.
     Contains separate subdirectories for different group members.
     e.g., u/darst.
 
 
-About code backwards-comptibilty and versioning
+About code backwards-compatibility and versioning
 -----------------------------------------------
 
 The idea of backwards compatibility is that, once written, code should
@@ -41,12 +41,12 @@ added. For a big shared library like this, this is a very important
 
 1. Code relating to scientific calculations should absolutely remain
 backwards compatible.  For example, changing a default option may
-affect the integreity of other people's work.
+affect the integrity of other people's work.
 
 2. All other code should remain as backwards-compatible as possible,
 for example plotting related code.  Small changes, such as
 improvements to plot output formats, are generally OK but use your
-judgement.
+judgment.  Other people will be relying on this!
 
 3. If need for "rewriting" a function exists, the new version number
 should be added to the end of the name:
@@ -77,6 +77,8 @@ guidelines:
   http://legacy.python.org/dev/peps/pep-0257/
 
 For a brief summary, see the file python_style.md of this repository.
+Most of these styles have good reasons, so consider the styles because
+they make sense, not just because it's the "way".
 
 
 CODE TESTING PRACTICES
@@ -85,7 +87,8 @@ CODE TESTING PRACTICES
 All scientific code should be tested.  However, reality indicates that
 tests slowly evolve.
 
-When submitting code, also test cases covering every line of the code are required (?).
+When submitting code, also test cases covering every line of the code
+are required (?).
 
 However, for the following directories (only one so far):
 
