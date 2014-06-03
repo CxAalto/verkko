@@ -59,7 +59,10 @@ should be added to the end of the name:
 At this point, you can take the opportunity to change anything and
 make general improvements. This can be done at both the function and
 module level.  Alternatively, you could take the opportunity to change
-the name to something else that is more descriptive.
+the name to something else that is more descriptive.  In the
+docstrings, make sure that you document what the new code replaces,
+any differences, and advice on which version to use (if it isn't
+obvious).
 
 4. These rules apply to mature code, not things that are too new to be
 used by many people.  It's always best to design things properly in
