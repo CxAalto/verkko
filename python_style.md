@@ -1,25 +1,27 @@
 # Python style and documentation guide for the group code-library
 
-We try to follow the PEP
-[style](http://legacy.python.org/dev/peps/pep-0008/) and
-[docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines,
-of which the following are modified excerpts with minor modifications.
-
 The reason for aiming to proper style and documentation is the following:
 
 > Code is read much more often than it is written.
 > Thus readability counts.
 
+We try to follow the PEP
+[style](http://legacy.python.org/dev/peps/pep-0008/) and
+[docstring](http://legacy.python.org/dev/peps/pep-0257/) guidelines,
+of which the following are modified excerpts with minor modifications.
 
-### Use 4 spaces!
-Python 3 does not even allow mixed use of tabs and spaces)
+Try to follow these guides, but don't let them come too much on your way.
+Sharing the code is more important!
+
+
+### Use 4 spaces for intendation!
+(Python 3 does not even allow mixed use of tabs and spaces)
 
 ### Limit lines to 79 characters
 * Possible to have multiple source code windows open at the same time
 * Easier comparison with code difference tools
 
 ### Spacing
-
 Use spacing to make code easy to read and beautiful.  Don't cram
 everything into one line:
 
@@ -28,33 +30,32 @@ everything into one line:
     if a == b  or  c in (5,6):   # spacing helps parse
         ....
 
-
 Parallelism is important, too, it makes it easier to read.  For
 example:
 
-   first  = 1   # extra space so that it lines up
-   second = 2
+    first  = 1   # extra space so that it lines up
+    second = 2
 
-   if a == 'const_1':     b    += 1
-   if a == 'const_other': cval += 1
+    if a == 'const_1':     b    += 1
+    if a == 'const_other': cval += 1
 
 ### Imports
 Put imports on separate lines:
 
-* Yes
+#### Yes
 
 ```python
 import sys
 import os
 ```
 
-*  No
+#### No
 
 ```python
 import sys, os
 ```
 
-Wildcards imports are **NOT** preferred:
+Wildcard imports are **NOT** preferred:
 
 * However, from `pylab import *` might not be always that dangerous.
 
@@ -140,6 +141,7 @@ def complex(real=0.0, imag=0.0):
     """
     if imag == 0.0 and real == 0.0:
         return complex_zero
+    ...
 ```
 
 Here is a quick checklist to help you write a docstring quickly.  Not
