@@ -1,10 +1,11 @@
-from python_aux import binner
 import pickle
 import matplotlib
 import pylab as p
 
 from itertools import imap as imap_itertools
 from itertools import izip as izip_itertools
+
+import binner
 
 class imap:
     def __init__(self,f,i):
