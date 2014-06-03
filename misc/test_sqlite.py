@@ -3,9 +3,9 @@
 from nose.tools import *
 
 def test_sqlitedict():
-    import pcd.sqlite
+    import sqlite
 
-    d = pcd.sqlite.SQLiteDict(':memory:')
+    d = sqlite.SQLiteDict(':memory:')
     d0 = {1: 15, 2: 'b', (3,'c'): 4}
 
     for k, v in d0.items():
@@ -34,7 +34,7 @@ def test_sqlitedict():
     assert_equal(set(d0.iterkeys()),   set(d))
 
     # update
-    d = pcd.sqlite.SQLiteDict(':memory:')
+    d = sqlite.SQLiteDict(':memory:')
     d.update(d0)
     assert_dict_equal(d0, dict(d0.iteritems()))
 
