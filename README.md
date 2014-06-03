@@ -8,10 +8,11 @@ allowed.
 Use common sense when combining different programming languages.
 
 
-Dependencies:
+DEPENDENCIES:
 -------------
+None so far.
 
-Structure of the repository:
+STRUCTURE OF THE REPOSITORY
 ----------------------------
 
 * plots:
@@ -32,7 +33,7 @@ Structure of the repository:
 
 
 About code backwards-compatibility and versioning
------------------------------------------------
+-------------------------------------------------
 
 The idea of backwards compatibility is that, once written, code should
 continue to work the same in the future even if more features are
@@ -87,11 +88,18 @@ they make sense, not just because it's the "way".
 CODE TESTING PRACTICES
 -----------------------
 
-All scientific code should be tested.  However, reality indicates that
-tests slowly evolve.
+All scientific code should be tested. 
+However, reality indicates that tests slowly evolve.
 
-When submitting code, also test cases covering every line of the code
-are required (?).
+When submitting code, also test cases covering (hopefully every line of) the code
+are required.
+The test scripts should be located in the same directory as the actual code:
+
+| Source code   | Tests          |
+| ---------     | -------------  |
+| module.py     | test_module.py |
+
+
 
 However, for the following directories (only one so far):
 
@@ -101,20 +109,25 @@ no testing is required.
 (For u/ this condition is relaxed as the code there is personal and/or
 under development)
 
-
 With visualizations/plotting routines, it is not required to provide explicit 
-tests. (testing )
+tests. 
 However, an example test/documentation script is required.
 
 
-PEER REVIEWING CODE(?)
-----------------------
-Too time-consuming (?)
+PEER REVIEWING CODE
+-------------------
+Based on the meeting, systematic peer-reviewing of the code is perhaps too much.
+However, when adding new stuff that many people are going to use, it is good to ask someone to look over your code.
+With smaller edits of the code, this is not necessary.
 
+More importantly, try to improve on other people's code when using it!
+This applies especially to the documentation and testing.
 
-But at least improve on other people's code when you use it!
+DON'T BE AFRAID
+---------------
 
-*  When you use some code, and find something badly documented/tested etc. 
-please improve the code!
-*  Don't be too afraid of 'breaking things', everything can be restored!
+The shared code-library is most useful when many people are using it.
+
+Thus, don't be too afraid of 'breaking things' as everything can be restored!
+
 
