@@ -3,9 +3,9 @@
 
 
 clean:
-	rm -r docs/build/
-	rm -r docs/coverage/
-	rm docs/test-results.html
+	rm -rf docs/build/
+	rm -rf docs/coverage/
+	rm -f docs/test-results.html
 
 # For HTML output this must be installed:
 #  https://github.com/cboylan/nose-html-output
@@ -18,8 +18,9 @@ test:
 docs:
 	mkdir -p docs/
 	python docs/apidoc.py . -o ./docs/api/ -f -d 0 --separate
-#	cp docs/conf.py docs/build/
-	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
+#	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
+#	This is needed in order to handle 'import pylab' in scripts.
+	PYTHONPATH=$PYTHONPATH:. python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
 
 # Make a list of all top-level directories, _without_ ./ prefix.
 MODULES=$(shell find . -maxdepth 1 -type d | sed -E 's@./(.*)@\1@')
