@@ -11,6 +11,13 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+If they have been generated and put in the right place, the following
+resources are available:
+
+ * The API documentation: :ref:`modindex`
+ * `HTML output from tests <../../test-results.html>`_
+ * A `code coverage report <../../coverage/>`_
+
 
 
 Indices and tables
