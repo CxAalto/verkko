@@ -31,3 +31,13 @@ coverage:
 	--cover-html --cover-html-dir=docs/coverage/
 #	--cover-inclusive
 
+
+cron:
+	git fetch
+	git checkout origin/master
+	make -f Makefile.local clean || true
+	make -f Makefile.local test || true
+	make -f Makefile.local coverage || true
+	make -f Makefile.local docs || true
+	git checkout master
+
