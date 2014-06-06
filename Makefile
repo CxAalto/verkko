@@ -1,6 +1,18 @@
+# This is a Makefile for doing various tests related to verkko, like
+# building documentation.  It is in a Makefile for concise scripting,
+# but could be moved else where later.  Maybe it would better fit in a
+# setup.py file.
 
-.PHONY: docs coverage test nightly
 
+.PHONY: default test docs coverage cron
+
+default:
+	@echo "Usage:"
+	@echo "  make clean - remove all temporary files created by these commands"
+	@echo "  make test - run unit tests (making docs/test-results.html if the)"
+	@echo "              html-output module is installed)"
+	@echo "  make docs - make HTML documentation in build/html/"
+	@echo "  make coverage - makes test coverage results in ./docs/coverage/"
 
 clean:
 	rm -rf docs/build/
@@ -15,24 +27,27 @@ NOSE_HTML = $(if $(shell nosetests -p | grep html-output), \
 test:
 	nosetests . $(NOSE_HTML)
 
+# Generate all docs
 docs:
 	mkdir -p docs/
-	python docs/apidoc.py . -o ./docs/api/ -f -d 0 --separate
+	python docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate
 #	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
 #	This is needed in order to handle 'import pylab' in scripts.
-	PYTHONPATH=$PYTHONPATH:. python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
+	python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
 
-# Make a list of all top-level directories, _without_ ./ prefix.
-MODULES=$(shell find . -maxdepth 1 -type d | sed -E 's@./(.*)@\1@')
 
+# Make the coverage tests in ./docs/coverage/
 coverage:
-	nosetests --with-coverage . \
-	--cover-erase  \
-	$(foreach x, $(MODULES), --cover-package=$x) \
+	nosetests --with-coverage ../verkko/ \
+	--cover-erase --cover-package=verkko \
 	--cover-html --cover-html-dir=docs/coverage/
 #	--cover-inclusive
 
-
+# Automatic script to fetch, update.  You should "cp Makefile
+# Makefile.local" manually in order to use this (for slight
+# safety/stability reasons - only a known-good makefile will be copied
+# but this does *not* provide security).  The cron command should be:
+#  ... cd /path/to/this/ && make -f Makefile.local cron > cron.output 2>&1
 cron:
 	git fetch
 	git checkout origin/master
