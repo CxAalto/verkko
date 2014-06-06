@@ -2,6 +2,8 @@ import unittest
 from operator import itemgetter
 import binner
 import numpy # Used only for testing with numpy arrays.
+import warnings
+
 
 class TestBins(unittest.TestCase):
     def setUp(self):
@@ -107,8 +109,10 @@ class TestBins(unittest.TestCase):
 
         # Test out of bounds values
         self.assert_(bf(0.999) < 0)
+        oldErrs = numpy.seterr(all="ignore")
         self.assert_(bf(0) < 0)
         self.assert_(bf(-100) < 0)
+        numpy.seterr(**oldErrs)
         self.assert_(bf(111) > len(bins)-2)
 
         bins = [ 5, 7.5, 11.25, 16.875, 25.3125, 37.96875 ]
@@ -369,7 +373,10 @@ class TestBins(unittest.TestCase):
 
     def test_WeightedAverage_Variance(self):
         # Check correct result
+        oldErrs = numpy.seterr(invalid="ignore")
         binned_data = self.bins.bin_weighted_average(self.weighted_data, True)
+        numpy.seterr(**oldErrs)
+
         expected_average = [None,None,2.5,11.8,None,23./5,20,None,1.6,10]
         expected_variance = [None,None,2.0, 0.9*4+1000-11.8**2,None,
                              (3+200)/5.0-(23./5)**2,0.0,None,0.0,0.0]
@@ -467,7 +474,9 @@ class TestBins2D(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_count_divide, self.bad_coords_B)
 
     def test_Average(self):
+        oldErrs = numpy.seterr(invalid='ignore')
         binned_data = self.bins.bin_average(self.data)
+        numpy.seterr(**oldErrs)
         expected_result = [[2,None,None,1],[5,5,8,None]]
         self.assertEqual(binned_data.tolist(), expected_result)
 
@@ -478,7 +487,9 @@ class TestBins2D(unittest.TestCase):
         self.assertRaises(binner.BinLimitError, self.bins.bin_average, self.bad_data_B)
 
     def test_Average_Variance(self):
+        oldErrs = numpy.seterr(invalid='ignore')
         binned_data = self.bins.bin_average(self.data, True)
+        numpy.seterr(**oldErrs)
         expected_average = [[2,None,None,1],[5,5,8,None]]
         expected_variance = [[1.0,None,None,0.0],[4.0,0.0,4.0,None]]
         self.assertEqual(binned_data[0].tolist(), expected_average)
@@ -534,7 +545,10 @@ class TestBins2D(unittest.TestCase):
 
 
     def test_Median(self):
+        # to ignore python and numpy core warnings: 
+        warnings.filterwarnings("ignore", category=RuntimeWarning) 
         binned_data = self.bins.bin_median(self.data)
+        warnings.resetwarnings()
         expected_result = [[2,None,None,1],[5,5,8,None]]
         self.assertEqual(binned_data.tolist(), expected_result)
 
