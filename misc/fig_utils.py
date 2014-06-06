@@ -5,7 +5,8 @@ import os
 import pylab
 import matplotlib.ticker as ticker
 import numpy as np
-import binner_noCoroutines as binner
+#import binner_noCoroutines as binner
+import binner
 
 def savefig(fig, name, extensions=None, verbose=False):
     """Save figure.
