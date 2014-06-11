@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import fig_utils as fu
+from ...misc import fig_utils as fu  # relative import
 
 # This file contains small helper function to be used alongwith matplotlib
 
