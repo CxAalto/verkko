@@ -33,7 +33,7 @@ docs:
 	python docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate
 #	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
 #	This is needed in order to handle 'import pylab' in scripts.
-	python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
+	PYTHONPATH=..:$$PYTHONPATH python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
 
 
 # Make the coverage tests in ./docs/coverage/
