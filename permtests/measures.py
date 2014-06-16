@@ -56,10 +56,10 @@ def t_value(dataArray, n1):
     return (mu1 - mu2) / np.sqrt(var1 / n1 + var2 / n2)
 
 # def sim_matrix_group_mean_diff(matrix, n1):
-#    return sim_matrix_group_means(matrix, n1, False)[2]
+#    return sim_matrix_within_group_means(matrix, n1, False)[2]
 
 
-def sim_matrix_group_means(matrix, n1):
+def sim_matrix_within_group_means(matrix, n1):
     """
     Computes the mean of the upper triangle (k=1) for the blocks
     (0,n-1)*(0,n-1) and (n,2n-1)*(n,2n-1), and their difference
@@ -122,7 +122,7 @@ def sim_matrix_inter_group_means(mat, paired=True, n1=None):
     return interMean, semidiagMean, semidiagMean - interMean
 
 
-def sim_matrix_within_group_means_minus_inter_group_mean(mat, paired, n1=None):
+def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
     """
     Computes the difference in the average within
     Arguments:
@@ -138,7 +138,7 @@ def sim_matrix_within_group_means_minus_inter_group_mean(mat, paired, n1=None):
         assert n1 is not None, ("give out n1 in sim_matrix_within_group_" +
                                 "means_minus_inter_group_mean")
     withinGroupAvgs = np.mean(
-        sim_matrix_group_means(mat, n1)[0:2])
+        sim_matrix_within_group_means(mat, n1)[0:2])
     interGroupMean = sim_matrix_inter_group_means(mat, paired=paired, n1=n1)
     if paired is True:
         interGroupMean = interGroupMean[0]
