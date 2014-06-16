@@ -7,6 +7,7 @@ from nose.tools import assert_almost_equal
 class TestMeasures(unittest.TestCase):
 
     def setUp(self):
+        self.as_arr_alm_eq = np.testing.assert_almost_equal
         self.one_dim_data_simple = np.array(
             [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
         )
@@ -76,31 +77,31 @@ class TestMeasures(unittest.TestCase):
             true_vals.append(one_dim_val)
 
         compt_vals = func(np.array(two_dim_data).T, self.n1)
-        np.testing.assert_array_almost_equal(compt_vals, np.array(true_vals))
+        self.as_arr_alm_eq(compt_vals, np.array(true_vals))
 
-    def test_sim_matrix_group_means(self):
-        group_means_1 = measures.sim_matrix_group_means(
+    def test_sim_matrix_within_groups_means(self):
+        group_means_1 = measures.sim_matrix_within_group_means(
             self.sim_mat_1, self.sim_mat_1_n1)
-        np.testing.assert_array_almost_equal(
+        self.as_arr_alm_eq(
             np.array(group_means_1), np.array([2., 6, -4]))
-        group_means_2 = measures.sim_matrix_group_means(
+        group_means_2 = measures.sim_matrix_within_group_means(
             self.sim_mat_2, self.sim_mat_2_n1)
-        np.testing.assert_array_almost_equal(
+        self.as_arr_alm_eq(
             np.array(group_means_2), np.array([2., 7, -5]))
-        group_means_2b = measures.sim_matrix_group_means(
+        group_means_2b = measures.sim_matrix_within_group_means(
             self.sim_mat_2, len(self.sim_mat_2) - self.sim_mat_2_n1)
-        np.testing.assert_array_almost_equal(
+        self.as_arr_alm_eq(
             np.array(group_means_2b), np.array([3., 8, -5]))
-        group_means_3 = measures.sim_matrix_group_means(
+        group_means_3 = measures.sim_matrix_within_group_means(
             self.sim_mat_3, self.sim_mat_3_n1)
-        np.testing.assert_array_almost_equal(
+        self.as_arr_alm_eq(
             np.array(group_means_3), np.array([3., 9, -6])
         )
 
     def test_sim_matrix_inter_group_means(self):
         inter_group_means_paired = measures.sim_matrix_inter_group_means(
             self.sim_mat_3, paired=True)
-        np.testing.assert_array_almost_equal(
+        self.as_arr_alm_eq(
             np.array(inter_group_means_paired), np.array([6., 10, 4.])
         )
         inter_group_mean = measures.sim_matrix_inter_group_means(
@@ -109,11 +110,11 @@ class TestMeasures(unittest.TestCase):
         assert_almost_equal(inter_group_mean, 66 / 9.)
 
     def test_sim_matrix_within_group_means_minus_inter_group_mean(self):
-        wmi = measures.sim_matrix_within_group_means_minus_inter_group_mean(
+        wmi = measures.sim_matrix_within_groups_mean_minus_inter_group_mean(
             self.sim_mat_3, True
         )
         assert_almost_equal(wmi, 0)
-        wmi = measures.sim_matrix_within_group_means_minus_inter_group_mean(
+        wmi = measures.sim_matrix_within_groups_mean_minus_inter_group_mean(
             self.sim_mat_3, False, n1=3
 
         )
