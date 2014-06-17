@@ -143,24 +143,3 @@ class TestPermutation(unittest.TestCase):
         for i in range(10):
             p = permute.get_permutation(paired, n1, n2, rng=self.rng)
             self.assert_permutation_validity(p, n1+n2)
-
-
-
-
-
-
-
-# def get_permutation(paired, n1, n2, rng, i):
-
-
-# def _get_random_paired_permutation(nTot, rng):
-
-# def _get_paired_permutation(n, i):
-
-# def permute_array(dataArray, perm):
-
-# def permute_matrix(matrix, perm):
-
-# def half_permute_matrix(matrix, perm):
-
-# def get_random_state(seed=None):
