@@ -125,4 +125,3 @@ class TestMeasures(unittest.TestCase):
                                                               self.sim_mat_3_n1
                                                               )
         assert_almost_equal(val, 66/9.)
-

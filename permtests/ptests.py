@@ -4,7 +4,6 @@ import numpy as np
 import multiprocessing
 
 # tell nose tests that this file is not a code test as such.
-__test__ = False
 
 
 def parallel_permtest(data_array, stat_func, permute_func, n1, n2,

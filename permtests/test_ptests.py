@@ -1,10 +1,10 @@
-import tests
+import ptests
 import measures
 import unittest
 import numpy as np
 
 
-class TestPermutationTests(unittest.TestCase):
+class TestPtests(unittest.TestCase):
 
     def setUp(self):
         self.as_arr_alm_eq = np.testing.assert_almost_equal
@@ -36,7 +36,7 @@ class TestPermutationTests(unittest.TestCase):
         # Testing t-value and meandiff
         # First with paired setup
         paired_study = True
-        stats = tests.mean_difference_permtest(self.simple_data,
+        stats = ptests.mean_difference_permtest(self.simple_data,
                                                self.simple_data_n1,
                                                self.simple_data_n2,
                                                paired_study,
@@ -46,7 +46,7 @@ class TestPermutationTests(unittest.TestCase):
                                                )
         self.assertEqual(stats[0], self.simple_data_p_paired)
         self.assertAlmostEqual(stats[1], self.simple_data_meandiff)
-        stats = tests.t_value_permtest(self.simple_data,
+        stats = ptests.t_value_permtest(self.simple_data,
                                        self.simple_data_n1,
                                        self.simple_data_n2,
                                        paired_study,
@@ -59,7 +59,7 @@ class TestPermutationTests(unittest.TestCase):
 
         # Same stuff with a unpaired setup
         paired_study = False
-        stats = tests.mean_difference_permtest(self.simple_data,
+        stats = ptests.mean_difference_permtest(self.simple_data,
                                                self.simple_data_n1,
                                                self.simple_data_n2,
                                                paired_study,
@@ -69,7 +69,7 @@ class TestPermutationTests(unittest.TestCase):
         self.assertTrue(np.abs(stats[0]-self.simple_data_p_unpaired) < 0.01)
         self.assertAlmostEqual(stats[1], self.simple_data_meandiff)
 
-        stats = tests.t_value_permtest(self.simple_data,
+        stats = ptests.t_value_permtest(self.simple_data,
                                        self.simple_data_n1,
                                        self.simple_data_n2,
                                        paired_study,
@@ -89,7 +89,7 @@ class TestPermutationTests(unittest.TestCase):
         two_dim_pvals = np.ones((sdn, ))*self.simple_data_p_paired
         two_dim_meandiffs = np.ones((sdn, ))*self.simple_data_meandiff
         paired_study = True
-        stats = tests.mean_difference_permtest(two_dim_data,
+        stats = ptests.mean_difference_permtest(two_dim_data,
                                                self.simple_data_n1,
                                                self.simple_data_n2,
                                                paired_study,
@@ -100,7 +100,7 @@ class TestPermutationTests(unittest.TestCase):
         self.as_arr_alm_eq(stats[0], two_dim_pvals)
         self.as_arr_alm_eq(stats[1], two_dim_meandiffs)
 
-        stats = tests.mean_difference_permtest(two_dim_data,
+        stats = ptests.mean_difference_permtest(two_dim_data,
                                                self.simple_data_n1,
                                                self.simple_data_n2,
                                                paired_study,
@@ -127,7 +127,7 @@ class TestPermutationTests(unittest.TestCase):
         mean_diff_within_group_diff = -1.  # only upper triangles
         paired_study = True
         # is the first group more consistent than the other?
-        stats = tests.sim_matrix_within_group_mean_diff_permtests(
+        stats = ptests.sim_matrix_within_group_mean_diff_permtests(
             sim_mat,
             n1,
             n2,
@@ -141,7 +141,7 @@ class TestPermutationTests(unittest.TestCase):
 
         unpaired_p_min_within_group_means = 1./(6*5*4/(3*2)) * 2
         paired_study = False
-        stats = tests.sim_matrix_within_group_mean_diff_permtests(
+        stats = ptests.sim_matrix_within_group_mean_diff_permtests(
             sim_mat,
             n1,
             n2,
@@ -181,7 +181,7 @@ class TestPermutationTests(unittest.TestCase):
         paired_study = True
         paired_p_val = 2./(2**4)*2
         p_val, inter_mean = \
-            tests.sim_matrix_group_distance_permtest(distance_mat,
+            ptests.sim_matrix_group_distance_permtest(distance_mat,
                                                      4,
                                                      4,
                                                      paired_study,
@@ -202,8 +202,8 @@ class TestPermutationTests(unittest.TestCase):
         ])
 
         #test pairedness
-        func_to_test = tests.sim_matrix_semidiag_vs_inter_group_permtest
-        pvals, dists = func_to_test(distance_mat, 10**3)
+        func_to_test = ptests.sim_matrix_semidiag_vs_inter_group_permtest
+        pvals, dists = func_to_test(distance_mat, 10**4)
         self.assertEqual(dists[0], 1)  # inter_mean (without semidiag)
         self.assertEqual(dists[1], 3)  # semidiag mean
         self.assertEqual(dists[2], 3-1)  # semidiag - inter_mean
