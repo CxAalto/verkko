@@ -203,7 +203,7 @@ class TestPtests(unittest.TestCase):
 
         #test pairedness
         func_to_test = ptests.sim_matrix_semidiag_vs_inter_group_permtest
-        pvals, dists = func_to_test(distance_mat, 10**4)
+        pvals, dists = func_to_test(distance_mat, 10**4, seed=10)
         self.assertEqual(dists[0], 1)  # inter_mean (without semidiag)
         self.assertEqual(dists[1], 3)  # semidiag mean
         self.assertEqual(dists[2], 3-1)  # semidiag - inter_mean
