@@ -55,9 +55,6 @@ def unpaired_t_value(data_array, n1):
     mu2 = np.average(data_array[n1:], axis=0)
     return (mu1 - mu2) / np.sqrt(var1 / n1 + var2 / n2)
 
-# def sim_matrix_group_mean_diff(matrix, n1):
-#    return sim_matrix_within_group_means(matrix, n1, False)[2]
-
 
 def sim_matrix_within_group_means(matrix, n1):
     """
@@ -77,7 +74,20 @@ def sim_matrix_within_group_means(matrix, n1):
     return mean1, mean2, mean1 - mean2
 
 
-def sim_matrix_inter_group_means(mat, paired=True, n1=None):
+def sim_matrix_mean_inter_group_similarity(mat, n1):
+    """ Average distance between groups """
+    n2 = np.shape(mat)[0] - n1
+    # between group similarities:
+    incidence_matrix12 = np.ones((n1, n2))
+    between_I = incidence_matrix12.nonzero()[0].copy()  # read-only
+    between_J = incidence_matrix12.nonzero()[1].copy()  # read-only
+    between_J += n1
+    between_indices = (between_I, between_J)
+    inter_group_mean = np.average(mat[between_indices])
+    return inter_group_mean
+
+
+def paired_sim_matrix_inter_group_means(mat, n1=None):
     """
     Computes the inter-group average (and separately for the same subjects!)
 
@@ -96,23 +106,19 @@ def sim_matrix_inter_group_means(mat, paired=True, n1=None):
         semidiag_mean-inter_group_mean: (convenience for statistical testing,
                                         only with paired setting)
     """
-    if paired:
-        n1 = np.shape(mat)[0] / 2
-    else:
-        assert n1 is not None, "give out n1 in sim_matrix_inter_group_means"
+    assert mat.shape[0] == mat.shape[1]
+    assert len(mat.shape) == 2
+    n1 = np.shape(mat)[0] / 2
     n2 = np.shape(mat)[0] - n1
 
     # between group similarities:
     incidence_matrix12 = np.ones((n1, n2))
-    if paired:
-        incidence_matrix12 -= np.eye(n1)
+    incidence_matrix12 -= np.eye(n1)
     between_I = incidence_matrix12.nonzero()[0].copy()
     between_I += n1
     between_J = incidence_matrix12.nonzero()[1].copy()
     between_indices = (between_I, between_J)
     inter_group_mean = np.average(mat[between_indices])
-    if not paired:
-        return inter_group_mean
 
     semidiag_indices_I = np.eye(n1).nonzero()[0].copy()
     semidiag_indices_J = np.eye(n1).nonzero()[1].copy()
@@ -127,10 +133,9 @@ def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
     Computes the difference in the average within
     Arguments:
         mat: the similarity matrix (with a paired setting)
-        paired: if paired=True, the same subject is not taken into account
-
-    Computes the inter conditions mean by neglecting the "semi-diagonal"
-    corresponding to the same subject (paired setting).
+        paired: if paired=True, the data for the pairs are not taken into
+                account. I.e. the diagonals and 'semi-diagonals' are not taken
+                into account.
     """
     if paired:
         n1 = np.shape(mat)[0] / 2
@@ -139,7 +144,8 @@ def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
                                 "means_minus_inter_group_mean")
     within_group_means = np.mean(
         sim_matrix_within_group_means(mat, n1)[0:2])
-    inter_group_mean = sim_matrix_inter_group_means(mat, paired=paired, n1=n1)
-    if paired is True:
-        inter_group_mean = inter_group_mean[0]
+    if paired:
+        inter_group_mean = paired_sim_matrix_inter_group_means(mat)[0]
+    else:
+        inter_group_mean = sim_matrix_mean_inter_group_similarity(mat, n1)
     return within_group_means - inter_group_mean

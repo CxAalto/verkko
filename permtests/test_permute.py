@@ -20,8 +20,7 @@ class TestPermutation(unittest.TestCase):
                                      [6, 6]
                                      ])
 
-        self.matrix = np.matrix([
-                                [11, 12, 13, 14],
+        self.matrix = np.array([[11, 12, 13, 14],
                                 [21, 22, 23, 24],
                                 [31, 32, 33, 34],
                                 [41, 42, 43, 44]
