@@ -1,58 +1,58 @@
 import numpy as np
 
 
-def mean_difference(dataArray, n1):
+def mean_difference(data_array, n1):
     """
     Computes the mean difference
 
     Args:
-        dataArray:  1 or 2 dimensional array
+        data_array:  1 or 2 dimensional array
         n1:         the number of elements in the first group
 
     Returns:
         the mean difference
     """
-    return (np.average(dataArray[:n1], axis=0) -
-            np.average(dataArray[n1:], axis=0))
+    return (np.average(data_array[:n1], axis=0) -
+            np.average(data_array[n1:], axis=0))
 
 
-def paired_t_value(dataArray, n1):
+def paired_t_value(data_array, n1):
     """
     Computes the paired t-value for a one or
     two dimensional numpy array
     See e.g.
 
     Args:
-        dataArray:  array of the values
+        data_array:  array of the values
         n1:         the number of elements in the first group
                     (same as in the second group)
 
     Returns:
         the t value
     """
-    differences = dataArray[:n1] - dataArray[n1:]
+    differences = data_array[:n1] - data_array[n1:]
     stds = np.std(differences, axis=0, ddof=1)
     avgs = np.average(differences, axis=0)
     return avgs / stds * np.sqrt(n1)
 
 
-def t_value(dataArray, n1):
+def unpaired_t_value(data_array, n1):
     """
     Computes the t-value (variance normalized mean difference) for a one or
     two dimensional numpy array
 
     Args:
-        dataArray:  array of the values
+        data_array:  array of the values
         n1:         the number of elements in the first group
 
     Returns:
         the t value
     """
-    n2 = dataArray.shape[0] - n1
-    var1 = np.var(dataArray[:n1], axis=0, ddof=1)
-    var2 = np.var(dataArray[n1:], axis=0, ddof=1)
-    mu1 = np.average(dataArray[:n1], axis=0)
-    mu2 = np.average(dataArray[n1:], axis=0)
+    n2 = data_array.shape[0] - n1
+    var1 = np.var(data_array[:n1], axis=0, ddof=1)
+    var2 = np.var(data_array[n1:], axis=0, ddof=1)
+    mu1 = np.average(data_array[:n1], axis=0)
+    mu2 = np.average(data_array[n1:], axis=0)
     return (mu1 - mu2) / np.sqrt(var1 / n1 + var2 / n2)
 
 # def sim_matrix_group_mean_diff(matrix, n1):
@@ -88,13 +88,13 @@ def sim_matrix_inter_group_means(mat, paired=True, n1=None):
                 (only needed if paired==False)
 
     Returns:
-        interMean       : the mean value of the inter-group area of the mat
+        inter_group_mean: the mean value of the inter-group area of the mat
                             -if paired==True, the 'half diagonal' is not
                             taken into account in computations.
-        semidiagMean    : the mean value of the half-diagonal
+        semidiag_mean: the mean value of the half-diagonal
                             (returned only if paired setting is used)
-        semidiagMean-interMean : (convenience for statistical testing,  only
-                                    with paired setting)
+        semidiag_mean-inter_group_mean: (convenience for statistical testing,
+                                        only with paired setting)
     """
     if paired:
         n1 = np.shape(mat)[0] / 2
@@ -103,23 +103,23 @@ def sim_matrix_inter_group_means(mat, paired=True, n1=None):
     n2 = np.shape(mat)[0] - n1
 
     # between group similarities:
-    incidenceMatrix12 = np.ones((n1, n2))
+    incidence_matrix12 = np.ones((n1, n2))
     if paired:
-        incidenceMatrix12 -= np.eye(n1)
-    betweenI = incidenceMatrix12.nonzero()[0].copy()
-    betweenI += n1
-    betweenJ = incidenceMatrix12.nonzero()[1].copy()
-    betweenIndices = (betweenI, betweenJ)
-    interMean = np.average(mat[betweenIndices])
+        incidence_matrix12 -= np.eye(n1)
+    between_I = incidence_matrix12.nonzero()[0].copy()
+    between_I += n1
+    between_J = incidence_matrix12.nonzero()[1].copy()
+    between_indices = (between_I, between_J)
+    inter_group_mean = np.average(mat[between_indices])
     if not paired:
-        return interMean
+        return inter_group_mean
 
-    semidiagIndicesI = np.eye(n1).nonzero()[0].copy()
-    semidiagIndicesJ = np.eye(n1).nonzero()[1].copy()
-    semidiagIndicesJ += n1
-    semidiagIndices = (semidiagIndicesI, semidiagIndicesJ)
-    semidiagMean = np.average(mat[semidiagIndices])
-    return interMean, semidiagMean, semidiagMean - interMean
+    semidiag_indices_I = np.eye(n1).nonzero()[0].copy()
+    semidiag_indices_J = np.eye(n1).nonzero()[1].copy()
+    semidiag_indices_J += n1
+    semidiag_indices = (semidiag_indices_I, semidiag_indices_J)
+    semidiag_mean = np.average(mat[semidiag_indices])
+    return inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean
 
 
 def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
@@ -137,9 +137,9 @@ def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
     else:
         assert n1 is not None, ("give out n1 in sim_matrix_within_group_" +
                                 "means_minus_inter_group_mean")
-    withinGroupAvgs = np.mean(
+    within_group_means = np.mean(
         sim_matrix_within_group_means(mat, n1)[0:2])
-    interGroupMean = sim_matrix_inter_group_means(mat, paired=paired, n1=n1)
+    inter_group_mean = sim_matrix_inter_group_means(mat, paired=paired, n1=n1)
     if paired is True:
-        interGroupMean = interGroupMean[0]
-    return withinGroupAvgs - interGroupMean
+        inter_group_mean = inter_group_mean[0]
+    return within_group_means - inter_group_mean

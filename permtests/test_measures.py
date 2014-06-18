@@ -63,7 +63,7 @@ class TestMeasures(unittest.TestCase):
         self.two_dim_helper(measures.paired_t_value)
 
     def test_two_dim_t_value(self):
-        self.two_dim_helper(measures.t_value)
+        self.two_dim_helper(measures.unpaired_t_value)
 
     def test_two_dim_mean_difference(self):
         self.two_dim_helper(measures.mean_difference)

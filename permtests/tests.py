@@ -1,7 +1,10 @@
 import permute
-import numpy as np
 import measures
+import numpy as np
 import multiprocessing
+
+# tell nose tests that this file is not a code test as such.
+__test__ = False
 
 
 def permutation_test(data,
@@ -11,7 +14,7 @@ def permutation_test(data,
                      n2,
                      paired_study,
                      n_permutations,
-                     seed=123456):
+                     seed=None):
     """
     Performs a permutation test with user specified test statistics
     yielding an estimate of the pvalue, and the test statistic.
@@ -20,7 +23,7 @@ def permutation_test(data,
         data:           the data on which to perform the test
         permute_func:    the permutation function
         statfunc:       one of the functions in the measures module
-        dataArray:      1d or 2d array of values (treatment/patients+control)
+        data_array:      1d or 2d array of values (treatment/patients+control)
         n1:             the number of subjcets in the first group
                         (13 treatment -> n=13)
         n2:             # of subjects in the 2nd group
@@ -31,7 +34,8 @@ def permutation_test(data,
                         (sometimes needed for parallellism)
 
     Returns:
-        Two-sided pvalues and the test statistic (tvalue/mean difference)
+        Conservative two-sided pvalues and the test statistic
+        (tvalue/mean difference)
     """
     #all pairs are paired -> change n_permutations
     if n_permutations == 'all':
@@ -60,49 +64,65 @@ def permutation_test(data,
         return np.minimum(1, 2*pvals), orig_stat
 
 
-def mean_differencePermutationTest(dataArray, n1, n2, paired_study,
-                                   n_permutations, seed=123456, nCpus=1):
-    return parallelPermutationTest(dataArray, measures.mean_difference,
-                                   measures.permute_array, n1, n2,
-                                   paired_study, n_permutations, seed, nCpus)
+def mean_difference_permtest(data_array, n1, n2, paired_study,
+                             n_permutations, seed=None, n_cpus=1):
+    """
+    Performs a simple mean difference permutation test.
+
+    See function permutation_test for explanations of input arguments.
+    """
+    return parallel_permtest(data_array, measures.mean_difference,
+                             permute.permute_array, n1, n2,
+                             paired_study, n_permutations, seed, n_cpus)
 
 
-def tValuePermutationTest(dataArray, n1, n2, paired_study, n_permutations,
-                          seed=123456, nCpus=1):
+def t_value_permtest(data_array, n1, n2, paired_study, n_permutations,
+                     seed=None, n_cpus=1):
+    """
+    Performs a simple t-value permutation test.
+
+    See function permutation_test for explanations of input arguments.
+    """
     if paired_study:
-        stat_func = measures.paired_tvalue
+        stat_func = measures.paired_t_value
     else:
-        stat_func = measures.t_value
-    return parallelPermutationTest(dataArray, stat_func,
-                                   measures.permute_array,
-                                   n1, n2, paired_study, n_permutations, seed,
-                                   nCpus)
+        stat_func = measures.unpaired_t_value
+    return parallel_permtest(data_array, stat_func, permute.permute_array,
+                             n1, n2, paired_study, n_permutations, seed,
+                             n_cpus)
 
 
-def groupMeanDiffSimMatrixPermutationTest(simMatrix, n1, n2, paired_study,
-                                          n_permutations, seed=123456):
-    "No parallelism available - nor needed (usually at least)"
-    return permutation_test(simMatrix, measures.sim_matrix_within_group_means,
-                            measures.permute_array, n1, n2, paired_study,
+def sim_matrix_within_group_mean_diff_permtest(sim_matrix, n1, n2,
+                                               paired_study, n_permutations,
+                                               seed=None):
+    """
+    Performs a simple t-value permutation test.
+
+    See function permutation_test for explanations of input arguments.
+    """
+    return permutation_test(sim_matrix, measures.sim_matrix_within_group_means,
+                            permute.permute_array, n1, n2, paired_study,
                             n_permutations, seed)
 
 
-def distanceBetweenGroupsPermutationTest(simMatrix, n1, n2, paired_study,
-                                         n_permutations, seed=123456):
+def sim_matrix_group_distance_permtest(sim_matrix, n1, n2, paired_study,
+                                       n_permutations, seed=None):
     "No parallelism available - nor needed (usually at least)"
     meas = measures.sim_matrix_within_groups_mean_minus_inter_group_mean
-    return permutation_test(simMatrix, meas, measures.permute_array, n1, n2,
+    return permutation_test(sim_matrix, meas, permute.permute_array, n1, n2,
                             paired_study, n_permutations, seed)
 
 
-def crossGroupMeanDifSimMatrixPermutationTest(matrix, nIt=1e6, seed=123456):
+def sim_matrix_inter_group_means_permtest(matrix, nIt=1e6, seed=None):
     """
     Paired study setup assumed
     (alghough for testing a not paired setting is used.)
 
     Returns:
-        p-values for (crossMean, semidiagMean, semidiagMean - crossMean)
-        orig. stats for (crossMean, semidiagMean, semidiagMean - crossMean)
+        p-values for
+            inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean
+        original statistics for
+            inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean
     """
     n1 = np.shape(matrix)[0]/2
     return permutation_test(matrix, measures.sim_matrix_inter_group_means,
@@ -110,29 +130,28 @@ def crossGroupMeanDifSimMatrixPermutationTest(matrix, nIt=1e6, seed=123456):
                             seed)
 
 
-def parallelPermutationTest(dataArray, stat_func, permute_func, n1, n2,
-                            paired_study, n_permutations, seed=123456,
-                            nCpus=1):
+def parallel_permtest(data_array, stat_func, permute_func, n1, n2,
+                      paired_study, n_permutations, seed=None, n_cpus=1):
     """
     Returns the permutation p-values and the values of the test statistic
     """
     #in case of no parallellism
-    if nCpus == 1:
-        return permutation_test(dataArray, stat_func, permute_func, n1, n2,
+    if n_cpus == 1:
+        return permutation_test(data_array, stat_func, permute_func, n1, n2,
                                 paired_study, n_permutations, seed)
 
     #if parallelism:
-    dataArraySlices = np.array_split(dataArray, nCpus, axis=1)
+    data_arraySlices = np.array_split(data_array, n_cpus, axis=1)
     #create input arguments
     inputArgsList = []
 
-    for i in range(0, nCpus):
-        inputArgsList.append((dataArraySlices[i], stat_func, permute_func, n1,
+    for i in range(0, n_cpus):
+        inputArgsList.append((data_arraySlices[i], stat_func, permute_func, n1,
                              n2, paired_study, n_permutations, seed))
 
     #run the estimation
-    pool = multiprocessing.Pool(processes=nCpus)
-    result = pool.map_async(_parallelPermutationTestHelper, inputArgsList,
+    pool = multiprocessing.Pool(processes=n_cpus)
+    result = pool.map_async(_parallel_permtest_helper, inputArgsList,
                             chunksize=1)
     #hack (to enable keyboard interruption)
     outputs = result.get(31536000)
@@ -144,7 +163,7 @@ def parallelPermutationTest(dataArray, stat_func, permute_func, n1, n2,
     return pvals, orig_stat
 
 
-def _parallelPermutationTestHelper(inputArgs):
+def _parallel_permtest_helper(inputArgs):
     """
     This function needs to be outside of the parallelPermutationTestHelper
     """
