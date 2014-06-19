@@ -58,23 +58,37 @@ def permutation_test(data,
     Performs a permutation test with user specified test statistics
     yielding an estimate of the pvalue, and the test statistic.
 
-    Args:
-        data:           the data on which to perform the test
-        permute_func:   the permutation function (see module permute)
-        statfunc:       one of the functions in the measures module
-        data_array:     1d or 2d array of values (treatment/patients+control)
-        n1:             the number of subjcets in the first group
-                        (13 treatment -> n=13)
-        n2:             # of subjects in the 2nd group
-        n_permutations: number of permutations as int
-                        OR 'all' (possible only when paired_study = True)
-        paired_study:   True/False: is the test paired or not?
-        seed:           seed value for the random number generator
-                        (sometimes needed for parallellism)
+    Arguments:
+    ===========
+    data:           numpy array
+       the data on which to perform the test
+       1d or 2d array of values (treatment/patients+control)
+    permute_func:   function
+       the permutation function (see module permute)
+    statfunc:       function
+        one of the functions in the measures module
+    n1:             int
+       the number of subjcets in the first group
+       (13 treatment -> n=13)
+    n2:             int
+       # of subjects in the 2nd group
+    n_permutations: int/string
+        number of permutations as integer
+        OR 'all' (possible only when paired_study = True)
+    paired_study:   bool
+        True/False: is the test paired or not?
+    seed:           int
+       seed value for the numpy random number generator
+       (sometimes needed for parallellism)
 
     Returns:
-        Conservative two-sided pvalues and the test statistic
-        (tvalue/mean difference)
+    ========
+    pvals:      numpy array
+       array of conservative two-sided p-values corresponding to
+       the number of tests
+    origstat:   numpy array
+       array of the original statistic (e.g. t_value of mean difference)
+       values corresponding to the number of tests
     """
     #all pairs are paired -> change n_permutations
     if n_permutations == 'all':
