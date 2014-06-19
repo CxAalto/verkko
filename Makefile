@@ -19,41 +19,51 @@ clean:
 	rm -rf docs/coverage/
 	rm -f docs/test-results.html
 
+# Python wrapper which disables X in pylab/pyplot
+PYTHON = python ./misc/python_no_pyplot.py
+
 # For HTML output this must be installed:
 #  https://github.com/cboylan/nose-html-output
 NOSE_HTML = $(if $(shell nosetests -p | grep html-output), \
                    --with-html-output --html-out-file=docs/test-results.html)
 
+# Run tests
 test:
-	nosetests . $(NOSE_HTML)
+	$(PYTHON) `which nosetests` . $(NOSE_HTML)
 
 # Generate all docs
 docs:
 	mkdir -p docs/
-	python docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate
+	$(PYTHON) docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate
 #	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
 #	This is needed in order to handle 'import pylab' in scripts.
-	PYTHONPATH=..:$$PYTHONPATH python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
+#	PYTHONPATH=..:$$PYTHONPATH python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
+	PYTHONPATH=..:$$PYTHONPATH $(PYTHON) `which sphinx-build` -E -a -b html ./docs/ ./docs/build/html/
 
 
 # Make the coverage tests in ./docs/coverage/
 coverage:
-	nosetests --with-coverage ../verkko/ \
+	$(PYTHON) `which nosetests` \
+	--with-coverage ../verkko/ \
 	--cover-erase --cover-package=verkko \
 	--cover-html --cover-html-dir=docs/coverage/
 #	--cover-inclusive
 
-# Automatic script to fetch, update.  You should "cp Makefile
-# Makefile.local" manually in order to use this (for slight
-# safety/stability reasons - only a known-good makefile will be copied
-# but this does *not* provide security).  The cron command should be:
+# Automatic script to fetch, update.  The weird usage of '-f
+# $(MAKEFILE)' here is so that I can make a copy of the Makefile to
+# use with cron.  Git updates won't automatically change the cron
+# script.  This doesn't provide any *real* security, but until there
+# is more isolation I want to go with it.  You should "cp Makefile
+# Makefile.local" manually on each significant update.  The cron
+# command should be:
 #  ... cd /path/to/this/ && make -f Makefile.local cron > cron.output 2>&1
+MAKEFILE = $(MAKEFILE_LIST)
 cron:
 	git fetch
 	git checkout origin/master
-	make -f Makefile.local clean || true
-	make -f Makefile.local test || true
-	make -f Makefile.local coverage || true
-	make -f Makefile.local docs || true
+	make -f $(MAKEFILE) clean || true
+	make -f $(MAKEFILE) test || true
+	make -f $(MAKEFILE) coverage || true
+	make -f $(MAKEFILE) docs || true
 	git checkout master
 
