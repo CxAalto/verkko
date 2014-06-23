@@ -1,5 +1,37 @@
 
+import warnings
+
 import networkx
+
+class NotTestedWarning(Warning):
+    """Emit a warning for untested code.
+
+    Consider using the warn_untested function instead.
+
+    Sample usage::
+        import verkko.misc.testutil as testutil
+        import warnings
+        warnings.warn('untested', testutil.NotTestedWarning)
+    """
+    pass
+def warn_untested(msg="This code is untested"):
+    """Emit a warning for untested code.
+
+    To use this, simply call this in an untested function.  When the
+    function runs, it will emit a warning like this::
+
+        verkko/graph/nxutil.py:63: NotTestedWarning: This code is untested
+          import verkko.misc.testutil as testutil ; testutil.warn_untested()
+
+
+    Arguments:
+        message: str, warning message, default 'This code is untested'
+            This is printed as the warning.  You could include extra
+            information here.
+
+    """
+    warnings.warn(msg, NotTestedWarning, stacklevel=2)
+
 
 def assert_isomorphic(g1, g2, msg=None):
     """Assertion function for networkx isomorphism"""
