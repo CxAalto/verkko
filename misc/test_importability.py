@@ -63,6 +63,9 @@ def callback(arg, dirname, fnames):
             # removing from fnames means the directory won't be walked.
             fnames.remove(fname)
             continue
+        # exclude editor backup files (emacs)
+        if '#' in fname:
+            continue
         # If it's a py file, add it to all_python_files.
         if fname.endswith('.py'):
             new_name = re.sub(r'[^a-zA-Z1-9_]+', r'_',
