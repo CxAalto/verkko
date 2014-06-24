@@ -17,7 +17,7 @@ unset.
 
 # Files to exclude.  Prefix in "./".  Filenames are removed, directory
 # names cause all included files to be excluded.
-exclude_files = ['./docs']
+exclude_files = ['./docs', './misc/interactnow.py']
 
 verkko_dir = os.path.relpath(os.path.dirname(os.path.dirname(__file__)))
 

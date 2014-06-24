@@ -27,6 +27,11 @@ PYTHON = python ./misc/python_no_pyplot.py
 NOSE_HTML = $(if $(shell nosetests -p | grep html-output), \
                    --with-html-output --html-out-file=docs/test-results.html)
 
+# These files should NOT be imported under any circumstances, due to
+# side-effects.  Using this variable should be a last-resort for
+# modules which intrinsically function via side-effects.
+EXCLUDE_FILES = misc/interactnow.py
+
 # Run tests
 test:
 	$(PYTHON) `which nosetests` . $(NOSE_HTML)
@@ -34,7 +39,8 @@ test:
 # Generate all docs
 docs:
 	mkdir -p docs/
-	$(PYTHON) docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate
+	$(PYTHON) docs/apidoc.py ../verkko/ -o ./docs/api/ -f -d 0 --separate \
+                 $(EXCLUDE_FILES)     # exclude paths
 #	PYTHONPATH=$PYTHONPATH:. sphinx-build -b html ./docs/ ./docs/build/html/
 #	This is needed in order to handle 'import pylab' in scripts.
 #	PYTHONPATH=..:$$PYTHONPATH python -c 'import matplotlib ; matplotlib.use("Agg"); import sphinx ; sphinx.main(argv="sphinx-build -E -a -b html ./docs/ ./docs/build/html/".split())'
