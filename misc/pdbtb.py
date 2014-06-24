@@ -2,6 +2,8 @@
 
 """
 """
+from __future__ import absolute_import
+
 
 import inspect
 import pdb
@@ -80,6 +82,6 @@ def now(frame=None, stackLevel=1):
 
 
 if __name__ == "__main__":
-    import fitz.runpy2
+    from . import runpy2
     enable()
-    fitz.runpy2.main()
+    runpy2.main()
