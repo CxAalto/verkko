@@ -166,10 +166,14 @@ use the code.
 ####``verkko``'s Sphinx documentation
 ``verkko`` uses [Sphinx](http://sphinx-doc.org/) for generating the html
  documentation.
- Sphinx uses reStructuredText to compile the documentation.
+ Especially our Sphinx build support the ``numpydoc`` format for docstrings.
+ An example numpydoc, which shows you most of the features:
+ [numpydoc example](https://github.com/numpy/numpy/blob/master/doc/example.py)
+ or e.g. ``verkko.ptests.permute``
+
+ Otherwise Sphinx uses reStructuredText to compile the documentation.
  See the [Sphinx reST-intro](http://sphinx-doc.org/rest.html) to get going.
- Especially, if you document docstrings according to the rst layout can
- be useful. See ``verkko.ptests`` for some examples.
+
  [More info on Shpinx rest references.](http://sphinx-doc.org/domains.html#signatures)
 
-
+ To compile the documentation locally, use ``make docs`` (at verkko 'home' directory)

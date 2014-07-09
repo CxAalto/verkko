@@ -5,6 +5,7 @@ for other use.
 
 Author: Rainer.Kujala@gmail.com
 """
+
 import numpy as np
 from numpy.random import RandomState
 
@@ -15,8 +16,15 @@ def get_random_state(seed=None):
     If no seed is given or seed = None, a RandomState object with default
     numpy seeding method (from time) is returned.
 
-    :param seed: an int or None
-    :return: A numpy RandomState object (a random number generator)
+    Parameters
+    ----------
+    seed : int
+        Seed for the random number generator.
+
+    Returns
+    -------
+    rng : numpy.random.RandomState
+        A random number generator from numpy
     """
     if seed is not None:
         return RandomState(seed)
@@ -28,13 +36,22 @@ def get_permutation(paired, n1, n2, rng=None, i=None):
     """
     Helper function to compute a permutation with all the switches.
 
-    :param paired: True or False, whether to return a paired permutation
-    :param n1: number of instances in the first group
-    :param n2: number of instances in the second group
-    :param rng: A random number generator (None for deterministic permutations)
-    :param i: The "index" of the permutation, when permSamples = 'all' is used
+    Parameters
+    ----------
+    paired : bool
+        True or False, whether to return a paired permutation
+    n1 : int
+        number of instances in the first group
+    n2 : int
+        number of instances in the second group
+    rng : np.random.RandomState
+        A random number generator (None for deterministic permutations)
+    i : int
+        The "index" of the permutation, when permSamples = 'all' is used
 
-    :return: the permutation as a numpy array
+    Returns:
+    --------
+    The permutation as a 1D numpy array
     """
     if paired is True:
         assert n1 == n2
@@ -51,10 +68,16 @@ def _get_random_paired_permutation(n_tot, rng):
     """
     Get a random paired permutation.
 
-    :param n_tot: the number of pairs * 2
-    :param rng: a numpy.RandomState object
+    Parameters
+    ----------
+    n_tot : int
+        the number of pairs * 2
+    rng : numpy.random.RandomState
+        the random number generator in use
 
-    :returns: One random permutation.
+    Returns:
+    --------
+    A random permutation as a 1D numpy array.
     """
     n = n_tot / 2
     perm = np.arange(0, n_tot, dtype=np.int32)
@@ -67,9 +90,13 @@ def _get_random_paired_permutation(n_tot, rng):
 def _get_paired_permutation(n, i):
     """Get a paired permutation corresponding to the index i
 
-    :param i: index of the permutation (in range 0<= i < 2**n)
-    :param n: number of *pairs* /(half of the total number of elements
-              to be permuted)
+    Parameters
+    ----------
+    i : int
+        index of the permutation (in range 0<= i < 2**n)
+    n : int
+        number of *pairs* /(half of the total number of elements
+        to be permuted)
     """
 
     assert i >= 0
@@ -90,10 +117,16 @@ def permute_array(data_array, perm):
     """
     Simply permute the array.
 
-    :param data_array: the numpy.ndarray to be permuted along the first axis
-    :param perm: the permutation
+    Parameters
+    ----------
+    data_array : numpy array
+        the numpy.ndarray to be permuted along the first axis
+    perm : numpy array
+        the permutation
 
-    :return: (a view) of the permuted data_array
+    Returns:
+    data_array: numpy array
+        A permuted view of the data_array
     """
     return data_array[perm]
 
@@ -103,10 +136,15 @@ def permute_matrix(matrix, perm):
     Permute the rows and columns of the (similarity) matrix.
     (Destroys any 'grouping' effects)
 
-    :param matrix: the matrix to be permuted
-    :param perm: a permutation (list of indices)
+    Parameters
+    ----------
+    matrix : 2D numpy array
+    perm : 1D numpy array
+        the permutation
 
-    :return: the permuted matrix
+    Returns
+    -------
+    A permuted view to the matrix.
     """
     assert matrix.shape[0] == matrix.shape[1], "should be a square matrix"
     return matrix[perm, :][:, perm]
@@ -118,10 +156,16 @@ def half_permute_paired_matrix(matrix, perm):
     destroys the paired structure of the matrix.
     The upper left corner of the matrix stays untouched.
 
-    :param matrix: the matrix to be permuted
-    :param perm: a permutation (list of indices)
+    Parameters
+    ----------
+    matrix : numpy array
+        the matrix to be permuted
+    perm : numpy array
+        The permutation (list of indices)
 
-    :return: the `half-permuted' matrix
+    Returns
+    -------
+    A view to the `half-permuted' matrix
     """
     assert len(matrix) % 2 == 0, "matrix rank should be paired"
     assert matrix.shape[0] == matrix.shape[1], "should be a square matrix"
