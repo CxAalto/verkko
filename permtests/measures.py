@@ -5,10 +5,19 @@ def mean_difference(data_array, n1):
     """
     Computes the mean difference
 
-    :param data_array:  1 or 2 dimensional array
-    :param n1: the number of elements in the first group
+    Parameters
+    ----------
+    data_array: numpy array
+        1 or 2 dimensional numpy array, the n1 first elements in
+        the zeroth axis of the array, should correspond to the
+        values of the first group
+    n1: int
+        the number of elements in the first group
 
-    :return: the mean difference
+    Returns
+    -------
+    md: numpy array
+        the mean difference
     """
     return (np.average(data_array[:n1], axis=0) -
             np.average(data_array[n1:], axis=0))
@@ -18,13 +27,21 @@ def paired_t_value(data_array, n1):
     """
     Computes the paired t-value for a one or
     two dimensional numpy array
-    See e.g.
+    See wikipedia
 
-    :param data_array: array of the values
-    :param n1: the number of elements in the first group
-               (same as in the second group)
+    Parameters
+    ----------
+    data_array: numpy array
+        1 or 2 dimensional numpy array, the n1 first elements in
+        the zeroth axis of the array, should correspond to the
+        values of the first group
+    n1: int
+        the number of elements in the first group
 
-    :return: the t value(s) (as a numpy array)
+    Returns
+    -------
+    t-value(s) : float/numpy array
+        the corresponding t-value(s)
     """
     assert len(data_array) / 2 == n1, "The data array is not "
     differences = data_array[:n1] - data_array[n1:]
@@ -38,10 +55,19 @@ def unpaired_t_value(data_array, n1):
     Computes the t-value (variance normalized mean difference) for a one or
     two dimensional numpy array
 
-    :param data_array:  array of the values
-    :param n1: the number of elements in the first group
+    Parameters
+    ----------
+    data_array: numpy array
+        1 or 2 dimensional numpy array, the n1 first elements in
+        the zeroth axis of the array, should correspond to the
+        values of the first group
+    n1: int
+        the number of elements in the first group
 
-    :return: the t-value(s) (as a numpy array)
+    Returns
+    -------
+    t-value(s) : float/numpy array
+        the corresponding t-value(s)
     """
     n2 = data_array.shape[0] - n1
     var1 = np.var(data_array[:n1], axis=0, ddof=1)
@@ -57,13 +83,24 @@ def sim_matrix_within_group_means(matrix, n1):
     (0,n-1)*(0,n-1) and (n,2n-1)*(n,2n-1), and their difference
     (for convenience).
 
-    :param n1: the number of instances in the first group
-    :param matrix: the similarity matrix
+    Parameters
+    ----------
+    matrix : 2D symmetric numpy array
+        1 or 2 dimensional numpy array, the n1 first indices in
+        the zeroth axis of the array, should correspond to the
+        values of the first group.
+        The value of ``matrix[i][j]`` should correspond to
+    n1 : int
+        the number of elements in the first group
 
-    :return:
-        * mean1: the average similarity between members in the first group
-        * mean2: the average similarity between members in the second group
-        * mean1-mean2: just mean1-mean2 (as a convenience for stat. testing)
+    Returns
+    -------
+    mean1 : float
+        the average similarity between members in the first group
+    mean2: float
+        the average similarity between members in the second group
+    mean1-mean2: float
+        just mean1-mean2 (as a convenience for stat. testing)
     """
     n2 = matrix.shape[0] - n1
     indices1 = np.triu_indices(n1, k=1)
@@ -79,12 +116,21 @@ def sim_matrix_within_group_means(matrix, n1):
 def sim_matrix_mean_inter_group_similarity(mat, n1):
     """ Computes the average distance/similarity between groups
 
-    :param mat: the distance/similarity matrix mat[i][j] is the similarity
-    :param n1: the number of members in the first group (indices
-        ``range(0,n1)`` correspond to group 1)
+    Parameters
+    ----------
+    mat : 2D symmetric numpy array
+        matrix : 2D symmetric numpy array
+        1 or 2 dimensional numpy array, the n1 first indices in
+        the zeroth axis of the array, should correspond to the
+        values of the first group.
+        The value of ``matrix[i][j]`` should correspond to
+    n1 : int
+        the number of elements in the first group
 
-    :return: inter_group_mean the average distance between the two groups
-        (one number)
+    Returns
+    -------
+    inter_group_mean : float
+        the average distance between the two groups
     """
     n2 = np.shape(mat)[0] - n1
     # between group similarities:
@@ -97,23 +143,39 @@ def sim_matrix_mean_inter_group_similarity(mat, n1):
     return inter_group_mean
 
 
-def paired_sim_matrix_inter_group_means(mat):
+def paired_sim_matrix_inter_group_means(mat, n1=None):
     """
     Computes the inter-group average (and separately for the same subjects!)
 
-    :param mat: The similarity matrix (numpy array, should be symmetric!)
+    Parameters
+    ----------
+    mat : 2D symmetric numpy array
+        matrix : 2D symmetric numpy array
+        1 or 2 dimensional numpy array, the n1 first indices in
+        the zeroth axis of the array, should correspond to the
+        values of the first group.
+        The value of ``matrix[i][j]`` should correspond to
+    n1 : int, optional
+        should equal to the number of members in the first group
+        given as an input parameter only due to consistency issues within
+        the permtests conventions
 
-    :return:
-        * inter_group_mean: the mean value of the inter-group area of the mat
-        * semidiag_mean: the mean value of the `half-diagonal' corresponding
-          to the same/paired subject in different conditions.
-        * semidiag_mean-inter_group_mean: (convenience for statistical
-          testing)
+    Returns
+    -------
+    inter_group_mean : float
+        the mean value of the inter-group area of the mat
+    semidiag_mean : float
+        the mean value of the `half-diagonal' corresponding
+        to the same/paired subject in different conditions.
+    semidiag_mean-inter_group_mean : float
+        (convenience for statistical testing)
     """
     assert mat.shape[0] == mat.shape[1]
     assert len(mat.shape) == 2
     assert mat.shape
-    n1 = np.shape(mat)[0] / 2
+    if n1 is None:
+        n1 = np.shape(mat)[0] / 2
+    assert n1 is np.shape(mat)[0] / 2
     assert len(mat) == 2 * n1, "Matrix can not be a paired sim matrix, " \
         "should have even number of subjects"
 
@@ -139,12 +201,22 @@ def sim_matrix_within_groups_mean_minus_inter_group_mean(mat, paired, n1=None):
     Computes the difference between the average similarity within the (two)
     groups.
 
-    :param mat: the similarity matrix (with a paired setting)
-    :param paired: if paired=True, the data for the pairs are not taken into
-                account. I.e. the diagonals and 'semi-diagonals' are not taken
-                into account.
+    Parameters
+    ----------
+    mat : 2D symmetric numpy array
+        matrix : 2D symmetric numpy array
+        1 or 2 dimensional numpy array, the n1 first indices in
+        the zeroth axis of the array, should correspond to the
+        values of the first group.
+        The value of ``matrix[i][j]`` should correspond to
+    paired : bool
+        if paired=True, the data for the pairs are not taken into
+        account. I.e. the diagonals and 'semi-diagonals' are not taken
+        into account.
 
-    :return: within_group_means - inter_group_mean (a single number)
+    Returns
+    -------
+    within_group_means - inter_group_mean : float
     """
     if paired:
         n1 = np.shape(mat)[0] / 2

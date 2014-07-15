@@ -75,8 +75,8 @@ def _get_random_paired_permutation(n_tot, rng):
     rng : numpy.random.RandomState
         the random number generator in use
 
-    Returns:
-    --------
+    Returns
+    -------
     A random permutation as a 1D numpy array.
     """
     n = n_tot / 2
@@ -124,7 +124,8 @@ def permute_array(data_array, perm):
     perm : numpy array
         the permutation
 
-    Returns:
+    Returns
+    -------
     data_array: numpy array
         A permuted view of the data_array
     """

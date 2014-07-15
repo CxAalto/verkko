@@ -1,4 +1,7 @@
-""" A module for testing/demonstrating the use of the alluvial.py module """
+"""
+A module for testing/demonstrating the use of the py:mod:alluvial module.
+Have a look at the source.
+"""
 import os
 
 from alluvial import plot_alluvial
@@ -33,7 +36,6 @@ def test():
         [1, 0, 3]
     ]
 
-
     module_colors_1 = ["red", "green", "blue"]
     module_colors_2 = ["green", "red", "blue"]
     ribbon_bglim = 1.5
@@ -41,7 +43,6 @@ def test():
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
-
 
     # the current full power:
     plot_alluvial(
@@ -53,8 +54,8 @@ def test():
     #  minimal setup
     plot_alluvial(ax2, ribbon_size_matrix)
 
-    fname =  os.path.join(os.path.dirname(__file__),
-                          "gallery/alluvial_example.pdf")
+    fname = os.path.join(os.path.dirname(__file__),
+                         "gallery/alluvial_example.pdf")
 
-    #save fig to gallery
+    # save fig to gallery
     plt.savefig(fname, format='pdf')

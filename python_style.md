@@ -176,4 +176,4 @@ use the code.
 
  [More info on Shpinx rest references.](http://sphinx-doc.org/domains.html#signatures)
 
- To compile the documentation locally, use ``make docs`` (at verkko 'home' directory)
+ To compile the documentation locally, use ``make docs`` (at verkko/)

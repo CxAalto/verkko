@@ -11,32 +11,42 @@ def parallel_permtest(data, stat_func, permute_func, n1, n2,
     """
     Returns the permutation p-values and the values of the test statistic.
 
-    :param data: a numpy nd array which contains all the data.
-                 ``data[i]`` contains the values corresponding to
-                 subject(/element/etc.) ``i``.
-    :param stat_func: a statistics function (see the ones in
+    Parameters
+    ----------
+    data: a numpy array
+        This contains all the data.
+        ``data[i]`` contains the values corresponding to
+        subject(/element/etc.) ``i``.
+    stat_func : a statistics function (see the ones in
                       :py:attr:measures)
-    :param permute_func: the function which can permute the data-array in the
-                         proper way, given a permutation (see :py:mod:permute)
-    :param int n1: the number of members in the first group
-    :param int n2: the number of members in the second group
-    :param bool paired_study: is the study setup paired? (affects permutations)
-    :param n_permutations:  Options:
-                                * number of permutations (as an int)
-                                * string `'all'` to loop over all possible
-                                  permutations (available only with
-                                  ``paired_study=True``)
-    :param seed: seed for the random number generator
-    :param n_cpus: the number of cpus used
+    permute_func : member of :py:mod:measures or equivalent
+        the function which can permute the data-array in the
+        proper way, given a permutation (see :py:mod:permute)
+    n1 : int
+        the number of members in the first group
+    n2 : int
+        the number of members in the second group
+    paired_study : bool
+        is the study setup paired? (affects permutations)
+    n_permutations :  int or str
+        Options:
+            * number of permutations (as an int)
+            * string `'all'` to loop over all possible
+              permutations (available only with
+              ``paired_study=True``)
+    seed : int
+        seed for the random number generator
+    n_cpus : int
+        the number of cpus used
 
-
-    :returns:
-        * pvals: a numpy array
-            an array of *conservative* two-sided p-values correspon the
-            number of tests
-        * origstat:   numpy array
-            array of the original statistic (e.g. t_value of mean difference)
-            values corresponding to the number of tests
+    Returns
+    -------
+    pvals : numpy array
+        an array of *conservative* two-sided p-values correspon the
+        number of tests
+    origstat : numpy array
+        array of the original statistic (e.g. t_value of mean difference)
+        values corresponding to the number of tests
     """
     # in case of no parallellism
     if n_cpus == 1:
@@ -152,12 +162,13 @@ def sim_matrix_within_group_mean_diff_permtests(sim_matrix, n1, n2,
 
     See :py:func:`parallel_permtest` for explanations of input arguments.
 
-    :return:
-        * stats: (tuple):
-            stats[0]: p-values for:
-                within_group_mean1, within_group_mean2, wgm1-wgm2
-            stats[1]: means for:
-                within_group_mean1, within_group_mean2, wgm1-wgm2
+    Returns
+    -------
+    stats: tuple
+        stats[0]: p-values for:
+            within_group_mean1, within_group_mean2, wgm1-wgm2
+        stats[1]: means for:
+            within_group_mean1, within_group_mean2, wgm1-wgm2
     """
     assert (sim_matrix == sim_matrix.T).all()
     stats = permutation_test(sim_matrix,
@@ -175,7 +186,10 @@ def sim_matrix_group_distance_permtest(
     This test answers the question, whether the distance/similarity between the
     groups is larger than expected by random chance.
 
-    :param sim_matrix: a similarity matrix
+    Parameters
+    ----------
+    sim_matrix : a similarity matrix
+
     For other input parameters see :py:func:`parallel_permtest`
     """
     assert (sim_matrix == sim_matrix.T).all()
@@ -191,19 +205,24 @@ def sim_matrix_semidiag_vs_inter_group_permtest(sim_matrix, nIt=1e6,
     (although for testing a not paired setting is used.)
     | **Be sure how this thing works before using it.**
 
-    :param sim_matrix: A similarity matrix.
-    :param nIt: number of iterations
-    :param seed: for the random number generator
+    Parameters
+    ----------
+    sim_matrix : numpy array
+        A similarity matrix.
+    nIt : int
+        number of iterations
+    seed : int
+        for the random number generator
 
-    :return:
-        * stats: (tuple):
-            stats[0]: p-values for:
-                ``inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean``
-            stats[1]: means for:
-                ``inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean``
-
-    The last ones (semidiag_mean - inter_group_mean) are the ones of
-    greatest interest
+    Returns
+    -------
+    stats : tuple
+        stats[0]: p-values for:
+            ``inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean``
+        stats[1]: means for:
+            ``inter_group_mean, semidiag_mean, semidiag_mean - inter_group_mean``
+        The last ones (semidiag_mean - inter_group_mean) are the ones of
+        greatest interest
     """
     assert (sim_matrix == sim_matrix.T).all()
     n1 = np.shape(sim_matrix)[0] / 2
