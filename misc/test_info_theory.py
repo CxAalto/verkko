@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import info_theory as it
 
+
 # All verification results have been calculated with Matlab library
 # "Mutual Information computation" by Hanchuan Peng
 # (http://www.mathworks.co.uk/matlabcentral/fileexchange/14888)
@@ -33,6 +34,7 @@ class Test_IT(unittest.TestCase):
         self.Q = self.Q/np.sum(self.Q)
 
     def test_entropy_X_Y(self):
+        old_errs = np.seterr(under="ignore", divide="ignore")
         ans_str = "%.10f" % it.entropy_X_Y(np.sum(self.P, 2))
         corr_ans = "%.10f" % 0.550977500432694
         self.assertEqual(ans_str, corr_ans)
@@ -44,8 +46,10 @@ class Test_IT(unittest.TestCase):
         ans_str = "%.10f" % it.entropy_X_Y(np.sum(self.P, 0))
         corr_ans = "%.10f" % 0.550977500432694
         self.assertEqual(ans_str, corr_ans)
+        np.seterr(**old_errs)
 
     def test_mutual_info_XY_Y(self):
+        old_errs = np.seterr(under="ignore", divide="ignore")
         ans_str = "%.10f" % it.mutual_info_XY_Z(self.P)
         corr_ans = "%.10f" % 0.550977500432694
         self.assertEqual(ans_str, corr_ans)
@@ -53,6 +57,7 @@ class Test_IT(unittest.TestCase):
         ans_str = "%.10f" % it.mutual_info_XY_Z(self.Q)
         corr_ans = "%.10f" % 0.950977500432694
         self.assertEqual(ans_str, corr_ans)
+        np.seterr(**old_errs)
 
 if __name__ == '__main__':
     #suite = unittest.TestSuite()

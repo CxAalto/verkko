@@ -13,6 +13,9 @@ of which the following are modified excerpts with minor modifications.
 Try to follow these guides, but don't let them come too much on your way.
 Sharing the code is more important!
 
+**Note that** for many texteditors there exists tools for automatically checking/correcting
+code style, which can make your life a lot easier. See for example [autopep8](https://github.com/hhatto/autopep8).
+
 
 ### Use 4 spaces for intendation!
 (Python 3 does not even allow mixed use of tabs and spaces)
@@ -114,10 +117,11 @@ Constants (on the module level):
 
 ### Documenting code
 
+See notes about Sphinx documentation below.
+
 #### Docstrings:
 
 Use one-liners for really obvious cases:
-
 
 ```python
 def sum(x, y):
@@ -159,3 +163,17 @@ use the code.
  * Time and memory complexity, if nontrivial.
 
 
+####``verkko``'s Sphinx documentation
+``verkko`` uses [Sphinx](http://sphinx-doc.org/) for generating the html
+ documentation.
+ Especially our Sphinx build support the ``numpydoc`` format for docstrings.
+ An example numpydoc, which shows you most of the features:
+ [numpydoc example](https://github.com/numpy/numpy/blob/master/doc/example.py)
+ or e.g. ``verkko.ptests.permute``
+
+ Otherwise Sphinx uses reStructuredText to compile the documentation.
+ See the [Sphinx reST-intro](http://sphinx-doc.org/rest.html) to get going.
+
+ [More info on Shpinx rest references.](http://sphinx-doc.org/domains.html#signatures)
+
+ To compile the documentation locally, use ``make docs`` (at verkko/)

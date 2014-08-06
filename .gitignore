@@ -2,7 +2,7 @@
 *.pyc
 *sublime*
 plots/gallery/*pdf
-
+*sublime*
 
 # Documentation building related things.
 /docs/coverage/

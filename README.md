@@ -7,6 +7,9 @@ Most of the code in this repo is written in Python, but also other languages are
 allowed.
 Use common sense when combining different programming languages.
 
+Documentation, test results and code coverage:
+  http://becs.aalto.fi/~darstr1/verkko/docs/build/html/index.html
+
 
 DEPENDENCIES:
 -------------
@@ -129,5 +132,3 @@ DON'T BE AFRAID
 The shared code-library is most useful when many people are using it.
 
 Thus, don't be too afraid of 'breaking things' as everything can be restored!
-
-
