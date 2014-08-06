@@ -76,10 +76,13 @@ def setLegend(ax, lines=None, legends=None, loc='upper left'):
 def setTickLabelsInvisible(axarr, whichaxis='x'):
     '''
     Make the x of y ticks invisible
+
     Parameters
     ----------
-    ax : axes or list of axes
-    whichaxis : x, y or xy
+    ax : matplotlib axes obj
+        axes or list of axes
+    whichaxis : str
+        x, y or xy
     '''
     if not isinstance(axarr, list):
         axarr = [axarr]
