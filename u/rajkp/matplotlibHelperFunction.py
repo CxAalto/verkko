@@ -74,10 +74,10 @@ def setLegend(ax, lines=None, legends=None, loc='upper left'):
 def setTickLabelsInvisible(axarr, whichaxis='x'):
     '''
     Make the x of y ticks invisible
-    Input:
-        ax: axes or list of axes
-        (optional arguments)
-        ticklabels: x, y or xy
+    Parameters
+    ----------
+    ax : axes or list of axes
+    whichaxis : x, y or xy
     '''
     if not isinstance(axarr, list):
         axarr = [axarr]
