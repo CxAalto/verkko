@@ -10,6 +10,33 @@ import random
 
 import networkx
 
+def from_string(s):
+    """Create a simple graph from a string.
+
+    This is designed to be a simple way to create small graphs for
+    test scripts, not a serious way of making graphs.
+
+    Examples:
+
+    - `from_string('1-2 2-3 3-1')`
+
+      This makes a simple clique graph with nodes 1,2,3
+
+    - `from_string('1-2-3-1')`
+
+      When there are multiple edges specified without a space, add all
+      the edges independently, in this case '1-2 2-3 3-1' are added.
+
+    These are the only operations defined for now.
+    """
+    edges = s.split()
+    g = networkx.Graph()
+    for e in edges:
+        e = e.split('-')
+        for i in range(len(e)-1):
+            g.add_edge(eval(e[i]), eval(e[i+1]))
+    return g
+
 def edges_between(g, nbunch1, nbunch2):
     """List of edges between two node sets.
 
