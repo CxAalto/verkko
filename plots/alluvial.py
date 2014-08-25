@@ -9,7 +9,8 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
                   ribbon_bglim=20, stable_ribbon_sizes_1=None,
                   stable_ribbon_sizes_2=None, ribbon_label_size=10,
                   ribbon_label_HA="center"):
-    """Plot a two-sided alluvial diagram to the ax given as parameter.
+    """
+    Plot a two-sided alluvial diagram to the ax given as parameter.
     See :py:mod:`test_alluvial` for examples.
 
     Parameters
