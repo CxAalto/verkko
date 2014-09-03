@@ -54,7 +54,8 @@ def get_permutation(paired, n1, n2, rng=None, i=None):
     The permutation as a 1D numpy array
     """
     if paired is True:
-        assert n1 == n2
+        assert n1 == n2, "With paired statistics setup, the number of" \
+                         "elements in each group should be the same"
         if rng is None:  # go through full permutation dist.
             assert i is not None
             return _get_paired_permutation(n1, i)
