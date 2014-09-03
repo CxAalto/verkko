@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from ...misc import binner
+import binner
 
 
 def getLimits2D(x, y=None, xscale='log', yscale='log'):
