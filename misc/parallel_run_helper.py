@@ -15,7 +15,9 @@ def run_in_parallel(work_func, arg_list, n_cpus, chunksize=1):
     n_cpus : int
         number of cpus
 
-    Returns:
+    Returns
+    -------
+    result_list : list
         [work_func(args) for args in arg_list]
     """
     # mainly for debugging purposes and generality
