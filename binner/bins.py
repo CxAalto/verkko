@@ -16,7 +16,6 @@ Example of giving data as input:
    bins = binner.Bins(int, 0, 200, 'lin', 10)
 
 """
-print "usage of this module is hazardous"
 
 
 class Bins(object):
@@ -221,6 +220,18 @@ class Bins2D(object):
             self._edge_grids = np.meshgrid(
                 self.bin_limits[0], self.bin_limits[1])
             return self._edge_grids
+
+    @property
+    def widths(self):
+        """Return bin widths as array."""
+        try:
+            return self._bin_widths
+        except AttributeError:
+            self._bin_widths = [
+                self.bin_limits[0].widths(),
+                self.bin_limits[1].widths()
+            ]
+            return self._bin_widths
 
     @property
     def sizes(self):

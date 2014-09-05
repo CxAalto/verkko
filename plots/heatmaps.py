@@ -44,27 +44,108 @@ def plot_counts(x,
         if this parameter is given, it overrides all other bin settings
     """
 
-    X, Y, binned_data, bin_centers, means = \
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+
+    X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
 
+    im = ax.pcolor(X, Y, counts_matrix,
+                   cmap=cmap, norm=colors.LogNorm()
+                   )
+
+    ax.plot(bin_centers, means, "go-")
+
+    cbar = fig.colorbar(im, cax, orientation='vertical',
+                        format=LogFormatterMathtext())
+    return fig, ax, cbar, im
+
+
+def plot_prob_density(x,
+                      y,
+                      cmap=cm.get_cmap('hot'),
+                      xscale='log',
+                      yscale='log',
+                      xParam=1.5,
+                      yParam=1.5,
+                      weights=None,
+                      ):
+    """
+    Plots the normalized probability density.
+
+    See plot_counts for explanations of the input variables.
+    """
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+
+    X, Y, counts_matrix, bin_centers, means, Bins2D = \
+        _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
+
+    Bins2D.sizes
+
+    prob_density = counts_matrix / (Bins2D.sizes.T * np.sum(counts_matrix))
+
+    assert np.abs(np.sum(prob_density * Bins2D.sizes.T) - 1) < 0.000001
+    im = ax.pcolor(X, Y, prob_density,
+                   cmap=cmap, norm=colors.LogNorm()
+                   )
+
+    ax.plot(bin_centers, means, "go-")
+
+    cbar = fig.colorbar(im, cax, orientation='vertical',
+                        format=LogFormatterMathtext())
+    return fig, ax, cbar, im
+
+
+def plot_conditional_prob_density(x,
+                                  y,
+                                  cmap=cm.get_cmap('hot'),
+                                  xscale='log',
+                                  yscale='log',
+                                  xParam=1.5,
+                                  yParam=1.5,
+                                  weights=None,
+                                  ):
+    """
+    Plots the conditional probability density. (P(y|x)).
+
+    See plot_counts for explanations of the input variables.
+    """
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+
+    X, Y, counts_matrix, bin_centers, means, Bins2D = \
+        _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
+
+    # prob_density = counts_matrix / (Bins2D.sizes.T * np.sum(counts_matrix))
+
+    # print counts_matrix.shape
+    x_counts = np.sum(counts_matrix, axis=0)
+    # print x_counts.shape
+    norm_x_counts_mat = counts_matrix / x_counts[None, :]
+    # print norm_x_counts_mat.shape
+
+    cond_prob = norm_x_counts_mat / Bins2D.widths[1][:, None]
+
+    im = ax.pcolor(X, Y, cond_prob,
+                   cmap=cmap, norm=colors.LogNorm()
+                   )
+
+    ax.plot(bin_centers, means, "go-")
+
+    cbar = fig.colorbar(im, cax, orientation='vertical',
+                        format=LogFormatterMathtext())
+    return fig, ax, cbar, im
+
+
+def _get_fig_ax_and_colorbar_ax(xscale, yscale):
     fig = plt.figure()
     y_low = 0.07
     y_height = 0.85
     ax = fig.add_axes([0.1, y_low, 0.8, y_height])
-    im = ax.pcolor(X, Y, binned_data,
-                   cmap=cmap, norm=colors.LogNorm()
-                   )
-    ax.plot(bin_centers, means, "go-")
-
+    cax = fig.add_axes([0.92, y_low, 0.03, y_height])
     if "log" in xscale:
         ax.set_xscale('log')
     if "log" in yscale:
         ax.set_yscale('log')
-
-    cax = fig.add_axes([0.92, y_low, 0.03, y_height])
-    cbar = fig.colorbar(im, cax, orientation='vertical',
-                        format=LogFormatterMathtext())
-    return fig, ax, cbar, im
+    return fig, ax, cax
 
 
 def _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam):
@@ -88,12 +169,12 @@ def _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam):
         float, min_y, max_y, yscale, yParam
     )
 
-    binned_data, _, _ = np.histogram2d(
+    counts_matrix, _, _ = np.histogram2d(
         x, y, bins=bins2D.bin_limits)
 
-    # binned_data = binned_data.astype(np.float64)
-    binned_data = binned_data.T
-    binned_data = np.ma.masked_array(binned_data, binned_data == 0)
+    # counts_matrix = counts_matrix.astype(np.float64)
+    counts_matrix = counts_matrix.T
+    counts_matrix = np.ma.masked_array(counts_matrix, counts_matrix == 0)
 
     X, Y = bins2D.edge_grids
     # compute bin average as a function of x:
@@ -103,4 +184,4 @@ def _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam):
     y_bin_means, _, _ = scipy.stats.binned_statistic(
         x, y, statistic='mean', bins=bins2D.xbin_lims
     )
-    return X, Y, binned_data, x_bin_means, y_bin_means
+    return X, Y, counts_matrix, x_bin_means, y_bin_means, bins2D
