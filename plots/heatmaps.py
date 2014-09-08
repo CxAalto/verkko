@@ -8,12 +8,13 @@ from matplotlib.ticker import LogFormatterMathtext
 
 def plot_counts(x,
                 y,
-                cmap=cm.get_cmap('hot'),
+                cmap=cm.get_cmap('summer'),
                 xscale='log',
                 yscale='log',
                 xParam=1.5,
                 yParam=1.5,
-                weights=None,
+                ax=None,
+                use_gridspec=False
                 ):
     """
     Plots the counts as a heatmap.
@@ -26,13 +27,11 @@ def plot_counts(x,
         values on x-axis
         if xbins and ybins are both given
     cmap : matplotlib.cm
-        colormap to use for the plot
+        colormap to use for the plot, defaulting to summer
     xscale : {"log", "linear", "linlog", ...}, optional
         see binner.binner or binner.bins for more info on the options
     yscale : {"log", "linear", "linlog", ...}, optional
         see binner.binner or binner.bins for more info on the options
-    cmap : matplotlib.cm
-        defaulting to hot 'hot'
     xParam : varies according to xscale
         if xscale == 'log'
             xParam equals to the multiplier
@@ -40,11 +39,15 @@ def plot_counts(x,
             xParam equals to the number of bins
     yParam : varies according to yscale
         see xParam
-    bins2D : binner.bins (or binner.binner) object
-        if this parameter is given, it overrides all other bin settings
+    ax : axis object
+        give this if plotting is used as a subroutine for existing
+        axis. Created if None.
+    use_gridspec : bool
+         set true if subroutine plotting to a subplot with gridspec
+         fixes the colorbar to the correct subplot
     """
 
-    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
 
     X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
@@ -55,26 +58,28 @@ def plot_counts(x,
 
     ax.plot(bin_centers, means, "go-")
 
-    cbar = fig.colorbar(im, cax, orientation='vertical',
+    cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
+                        orientation='vertical',
                         format=LogFormatterMathtext())
     return fig, ax, cbar, im
 
 
 def plot_prob_density(x,
                       y,
-                      cmap=cm.get_cmap('hot'),
+                      cmap=cm.get_cmap('summer'),
                       xscale='log',
                       yscale='log',
                       xParam=1.5,
                       yParam=1.5,
-                      weights=None,
+                      ax=None,
+                      use_gridspec=False
                       ):
     """
     Plots the normalized probability density.
 
     See plot_counts for explanations of the input variables.
     """
-    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
 
     X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
@@ -90,26 +95,28 @@ def plot_prob_density(x,
 
     ax.plot(bin_centers, means, "go-")
 
-    cbar = fig.colorbar(im, cax, orientation='vertical',
+    cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
+                        orientation='vertical',
                         format=LogFormatterMathtext())
     return fig, ax, cbar, im
 
 
 def plot_conditional_prob_density(x,
                                   y,
-                                  cmap=cm.get_cmap('hot'),
+                                  cmap=cm.get_cmap('summer'),
                                   xscale='log',
                                   yscale='log',
                                   xParam=1.5,
                                   yParam=1.5,
-                                  weights=None,
+                                  ax=None,
+                                  use_gridspec=False
                                   ):
     """
     Plots the conditional probability density. (P(y|x)).
 
     See plot_counts for explanations of the input variables.
     """
-    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale)
+    fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
 
     X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
@@ -129,17 +136,26 @@ def plot_conditional_prob_density(x,
 
     ax.plot(bin_centers, means, "go-")
 
-    cbar = fig.colorbar(im, cax, orientation='vertical',
+    cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
+                        orientation='vertical',
                         format=LogFormatterMathtext())
     return fig, ax, cbar, im
 
 
-def _get_fig_ax_and_colorbar_ax(xscale, yscale):
-    fig = plt.figure()
-    y_low = 0.07
-    y_height = 0.85
-    ax = fig.add_axes([0.1, y_low, 0.8, y_height])
-    cax = fig.add_axes([0.92, y_low, 0.03, y_height])
+def _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=None):
+    #create figure and axis if not given
+    if ax==None:
+        fig = plt.figure()
+        y_low = 0.07
+        y_height = 0.85
+        ax = fig.add_axes([0.1, y_low, 0.8, y_height])
+        cax = fig.add_axes([0.92, y_low, 0.03, y_height])
+    else:   #set colorbar axes to None so the 
+            #space is stolen from the given plotting axes
+        cax=None
+        fig=ax.get_figure()
+
+    #set the scale
     if "log" in xscale:
         ax.set_xscale('log')
     if "log" in yscale:
