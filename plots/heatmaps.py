@@ -114,10 +114,13 @@ def plot_conditional_prob_density(x,
     X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
 
+    # count vals for each x-bin
     x_counts = np.sum(counts_matrix, axis=0)
 
+    # normalize the counts for each x-bin by the total number
     norm_x_counts_mat = counts_matrix / x_counts[None, :]
 
+    # to get the prob density, normalize by the bin widths
     cond_prob = norm_x_counts_mat / Bins2D.widths[1][:, None]
 
     im = ax.pcolor(X, Y, cond_prob,

@@ -3,6 +3,7 @@
 *sublime*
 plots/gallery/*pdf
 *sublime*
+*.nfs00000000*
 
 # Documentation building related things.
 /docs/coverage/
