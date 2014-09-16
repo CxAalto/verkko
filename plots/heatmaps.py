@@ -106,8 +106,8 @@ def plot_conditional_prob_density(x,
                                   cmap=cm.get_cmap('summer'),
                                   xscale='log',
                                   yscale='log',
-                                  xParam=1.5,
-                                  yParam=1.5,
+                                  xParam=np.sqrt(2),
+                                  yParam=np.sqrt(2),
                                   ax=None,
                                   use_gridspec=False
                                   ):
@@ -143,19 +143,19 @@ def plot_conditional_prob_density(x,
 
 
 def _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=None):
-    #create figure and axis if not given
-    if ax==None:
+    # create figure and axis if not given
+    if ax == None:
         fig = plt.figure()
         y_low = 0.07
         y_height = 0.85
         ax = fig.add_axes([0.1, y_low, 0.8, y_height])
         cax = fig.add_axes([0.92, y_low, 0.03, y_height])
-    else:   #set colorbar axes to None so the 
-            #space is stolen from the given plotting axes
-        cax=None
-        fig=ax.get_figure()
+    else:  # set colorbar axes to None so the
+            # space is stolen from the given plotting axes
+        cax = None
+        fig = ax.get_figure()
 
-    #set the scale
+    # set the scale
     if "log" in xscale:
         ax.set_xscale('log')
     if "log" in yscale:
