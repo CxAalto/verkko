@@ -1,4 +1,4 @@
-# Different command for making figures.
+# Different commands for making figures.
 
 import sys
 import os
@@ -6,7 +6,11 @@ import pylab
 import matplotlib.ticker as ticker
 import numpy as np
 #import binner_noCoroutines as binner
-import binner
+from verkko.binner import binner
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 def savefig(fig, name, extensions=None, verbose=False):
     """Save figure.
@@ -32,12 +36,12 @@ def savefig(fig, name, extensions=None, verbose=False):
 
     if isinstance(extensions, str):
         extensions = (extensions,)
-    
+
     # Check if pdf should be generated (both eps and svg will be
     # created from pdf) and generate if necessary.
     pdf_generated = False
     pdf_tmp = "%s_tmp_%d.pdf" % (name, np.random.randint(100000))
-    if set(['pdf','svg','eps']).intersection(extensions):
+    if set(['pdf', 'svg', 'eps']).intersection(extensions):
         fig.savefig(pdf_tmp)
         pdf_generated = True
 
@@ -46,7 +50,7 @@ def savefig(fig, name, extensions=None, verbose=False):
             raise ValueError("'extensions' must be a list of strings.")
         if ext[0] == '.':
             ext = ext[1:]
-            
+
         if ext == 'eps':
             pipe = os.popen("pdftops -eps %s %s.eps" % (pdf_tmp, name))
             exit_status = pipe.close()
@@ -75,11 +79,12 @@ def savefig(fig, name, extensions=None, verbose=False):
 
     if pdf_generated:
         if 'pdf' in extensions:
-            os.popen("mv %s %s.pdf" % (pdf_tmp,name))
+            os.popen("mv %s %s.pdf" % (pdf_tmp, name))
         else:
             os.popen("rm %s" % (pdf_tmp,))
 
-def get_rcParams(fig_width_cm, fig_ratio = 0.8, font_sizes = None):
+
+def get_rcParams(fig_width_cm, fig_ratio=0.8, font_sizes=None):
     """Set good parameters for LaTeX-figures.
 
     The idea idea is to set the figure width in centimeters to be the
@@ -100,18 +105,20 @@ def get_rcParams(fig_width_cm, fig_ratio = 0.8, font_sizes = None):
         used when the specific value is not defined, other keys should
         be self explanatory.
     """
-    default_font_sizes = {'label':8, 'title':10, 'text':8, 'legend':8, 'tick':8}
+    default_font_sizes = {
+        'label': 8, 'title': 10, 'text': 8, 'legend': 8, 'tick': 8}
     font_sizes = (font_sizes or {})
     for k in default_font_sizes:
         if k not in font_sizes:
-            font_sizes[k] = (font_sizes.get('default') or default_font_sizes[k])
+            font_sizes[k] = (
+                font_sizes.get('default') or default_font_sizes[k])
 
-    inches_per_cm = 1/2.54
-    fig_width = 1.0*fig_width_cm*inches_per_cm  # width in inches
-    fig_height = 1.0*fig_width*fig_ratio        # height in inches
-    fig_size =  [fig_width,fig_height]
-    params = {'font.family':'serif',
-              'font.serif':'Computer Modern Roman',
+    inches_per_cm = 1 / 2.54
+    fig_width = 1.0 * fig_width_cm * inches_per_cm  # width in inches
+    fig_height = 1.0 * fig_width * fig_ratio        # height in inches
+    fig_size = [fig_width, fig_height]
+    params = {'font.family': 'serif',
+              'font.serif': 'Computer Modern Roman',
               'axes.labelsize': font_sizes['label'],
               'axes.titlesize': font_sizes['title'],
               'text.fontsize': font_sizes['text'],
@@ -126,56 +133,65 @@ def get_rcParams(fig_width_cm, fig_ratio = 0.8, font_sizes = None):
               'lines.linewidth': 0.5}
     return params
 
+
 class EvenExpFormatter(ticker.LogFormatterMathtext):
+
     """Print labels only for even exponentials. Exponents given in
     'exclude' will also be skipped.
     """
+
     def __init__(self, base=10.0, labelOnlyBase=True, exclude=None):
         if exclude == None:
             self.exclude = []
         else:
             self.exclude = exclude
         ticker.LogFormatterMathtext.__init__(self, base, labelOnlyBase)
-    
+
     def __call__(self, val, pos=None):
-        fx = int(np.floor(np.log(abs(val))/np.log(self._base) +0.5)) 
+        fx = int(np.floor(np.log(abs(val)) / np.log(self._base) + 0.5))
         isDecade = self.is_decade(fx)
         if not isDecade and self.labelOnlyBase:
             return ''
-        if (fx%2)==1 or (fx in self.exclude): # odd, skip
+        if (fx % 2) == 1 or (fx in self.exclude):  # odd, skip
             return ''
 
         return ticker.LogFormatterMathtext.__call__(self, val, pos)
+
 
 class SkipMathFormatter(ticker.LogFormatterMathtext):
+
     """Skip exponents given in 'exclude'.
     """
+
     def __init__(self, base=10.0, labelOnlyBase=True, exclude=None):
         if exclude == None:
             self.exclude = []
         else:
             self.exclude = exclude
         ticker.LogFormatterMathtext.__init__(self, base, labelOnlyBase)
-    
+
     def __call__(self, val, pos=None):
-        fx = int(np.floor(np.log(abs(val))/np.log(self._base) +0.5)) 
+        fx = int(np.floor(np.log(abs(val)) / np.log(self._base) + 0.5))
         isDecade = self.is_decade(fx)
         if not isDecade and self.labelOnlyBase:
             return ''
-        if fx in self.exclude: # skip
+        if fx in self.exclude:  # skip
             return ''
 
         return ticker.LogFormatterMathtext.__call__(self, val, pos)
 
+
 class SelectiveScalarFormatter(ticker.ScalarFormatter):
+
     """Print only the ticks in the input list.
     """
+
     def __init__(self, printList=None, useOffset=True, useMathText=False):
         if printList is None:
             printList = []
         self.printList = printList
         ticker.ScalarFormatter.__init__(self, useOffset, useMathText)
-    
+
     def __call__(self, val, pos=None):
         if val in self.printList:
             return ticker.ScalarFormatter.__call__(self, val, pos)
@@ -184,16 +200,18 @@ class SelectiveScalarFormatter(ticker.ScalarFormatter):
 
 
 class DivisorFormatter(ticker.FormatStrFormatter):
+
     """Divide all numbers by a constant."""
+
     def __init__(self, fmt, divisor=None):
         if divisor == None:
             self.divisor = 1
         else:
             self.divisor = divisor
         ticker.FormatStrFormatter.__init__(self, fmt)
-    
+
     def __call__(self, val, pos=None):
-        return ticker.FormatStrFormatter.__call__(self, int(1.0*val/self.divisor), pos)
+        return ticker.FormatStrFormatter.__call__(self, int(1.0 * val / self.divisor), pos)
 
 
 def distribution_2d(ax, bins, data, log_scaling=True, plot_average=True):
@@ -223,15 +241,15 @@ def distribution_2d(ax, bins, data, log_scaling=True, plot_average=True):
     # Create coordinates and create an array from the data
     X, Y = bins.edge_grids
     Z = np.array(binned_data, float)
-    Z = np.ma.masked_array(Z, Z==0)
+    Z = np.ma.masked_array(Z, Z == 0)
 
     # Normalize each weight bin separately.
     for j in range(len(Z)):
         row_sum = np.sum(Z[j])
         if row_sum:
-            Z[j] = Z[j]/np.sum(Z[j])
+            Z[j] = Z[j] / np.sum(Z[j])
     Z = np.transpose(Z)
-        
+
     # Plot
     if log_scaling:
         norm = pylab.matplotlib.colors.LogNorm()
@@ -253,7 +271,7 @@ def distribution_2d(ax, bins, data, log_scaling=True, plot_average=True):
         # Create bins for the average. The first line creates a dummy
         # binner; the intestines are then changed to those in `bins`
         # on the next two lines.
-        avg_bins = binner.Bins(int, 0, 10, 'lin', 1) # Dummy
+        avg_bins = binner.Bins(int, 0, 10, 'lin', 1)  # Dummy
         avg_bins.bin_limits = bins.bin_limits[0]
         avg_bins.bin_finder = bins.x_bin_finder
         binned_avg = avg_bins.bin_average(data)
@@ -264,6 +282,7 @@ def distribution_2d(ax, bins, data, log_scaling=True, plot_average=True):
         ax.plot(avg_bins.centers, binned_avg, plot_type, lw=1.0)
 
     return im
+
 
 def scatter_2d(ax, bins, data, log_scaling=True, draw_diagonal=False):
     """Plot a binned scatter plot.
@@ -289,12 +308,12 @@ def scatter_2d(ax, bins, data, log_scaling=True, draw_diagonal=False):
     # Create coordinates and create an array from the data
     X, Y = bins.edge_grids
     Z = np.array(binned_data, float)
-    Z = np.ma.masked_array(Z, Z==0)
+    Z = np.ma.masked_array(Z, Z == 0)
 
     # Normalize the data as a whole.
-    Z = Z/Z.sum()
+    Z = Z / Z.sum()
     Z = np.transpose(Z)
-        
+
     # Plot
     if log_scaling:
         norm = pylab.matplotlib.colors.LogNorm()
@@ -318,13 +337,13 @@ def scatter_2d(ax, bins, data, log_scaling=True, draw_diagonal=False):
 
     return im
 
-    
+
 def pretty_number(x):
     """Turn integer into a pretty string.
-    
+
     Make a pretty number by adding extra spaces between every three
     digits. The LaTeX environment must be active.
-    
+
     Parameters
     ----------
     x : int
@@ -336,16 +355,24 @@ def pretty_number(x):
        String representation of the integer.
     """
 
-    if isinstance(x,float):
+    if isinstance(x, float):
         return r"$%.2f$" % x
 
     s_tmp = str(abs(x))
     s = ""
     while s_tmp:
         if len(s_tmp) > 3:
-            s = r"\,"+s_tmp[-3:]+s
+            s = r"\," + s_tmp[-3:] + s
             s_tmp = s_tmp[:-3]
         else:
-            s = ("-" if x<0 else "")+s_tmp+s
+            s = ("-" if x < 0 else "") + s_tmp + s
             break
     return r"$%s$" % s
+
+
+def save_all_open_figs_to_pdf(fname):
+    with PdfPages(fname) as pdf:
+        fignums = plt.get_fignums()
+        for i in fignums:
+            fig = plt.figure(i)
+            pdf.savefig(fig)

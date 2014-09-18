@@ -77,14 +77,12 @@ def plot_prob_density(x,
     """
     Plots the normalized probability density.
 
-    See plot_counts for explanations of the input variables.
+    See :py:func:`plot_counts` for explanations of the input variables.
     """
     fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
 
     X, Y, counts_matrix, bin_centers, means, Bins2D = \
         _get_count_data_to_plot(x, y, xscale, yscale, xParam, yParam)
-
-    Bins2D.sizes
 
     prob_density = counts_matrix / (Bins2D.sizes.T * np.sum(counts_matrix))
 
@@ -144,7 +142,7 @@ def plot_conditional_prob_density(x,
 
 def _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=None):
     # create figure and axis if not given
-    if ax == None:
+    if ax is None:
         fig = plt.figure()
         y_low = 0.07
         y_height = 0.85
