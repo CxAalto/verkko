@@ -1,29 +1,67 @@
 import colorsys
 import numpy as np
 
+
 """
 This modules contains helper functions for obtaining sets of distinct colors.
-More color-related functions are welcome.
+
+For more functionality and colorsets see the brewer2mpl python package.
 """
 
 
 def get_distinct_colors(num_colors):
     """
-    Helper function for getting an arbitrary number of distinct colors.
-    The algorithm is purely heuristical.
+    Get any number of distinct colors.
+    
+    If num_colors <= 12, the cbrewer palettes are used.
+    Otherwise the colors are generated algorithmically based on 
+    the HLS color model.
     """
-    colorList = []
+    assert num_colors >= 0
+    if num_colors <= 12:
+        try:
+            return get_qualitative_brewer_colors(num_colors)
+        except:
+            # in case cbrewer is not available.
+            pass
+    return get_arbitrary_n_of_distinct_colors(num_colors)
+        
+        
+def get_arbitrary_n_of_distinct_colors(num_colors):
+    """
+    Helper function for getting an arbitrary number of distinct colors.
+    The algorithm is pure heuristic.
+    """
+    color_list = []
     hueMax = 360.
     for j, i in enumerate(np.linspace(0., hueMax, num_colors)):
         hue = i / 360.
         lightness = (38 + j % 3 * 17) / 100.
         saturation = (80 + j % 2 * 20) / 100.
-        colorList.append(colorsys.hls_to_rgb(hue, lightness, saturation))
-    return np.array(colorList)
+        color_list.append(colorsys.hls_to_rgb(hue, lightness, saturation))
+    return np.array(color_list)
 
+def get_qualitative_brewer_colors(num_colors):
+    """
+    Get colors according to the colorbrewer palette.
+    """
+    try:
+        import brewer2mpl as br
+    except:
+        print "Could not import brewer2mpl, do you have it in your $PYTHONPATH?"
+        raise
+    
+    assert num_colors <= 12, "max 12 colors are supported"
+
+    if num_colors > 9:
+        brmap = br.get_map('Paired', 'Qualitative', num_colors) 
+    else:
+        brmap = br.get_map('Set1', 'Qualitative', num_colors)
+    return np.array(brmap.colors)/255
+        
 
 """
-See the origin of colorbrewer palettes at:
+See the original colorbrewer palettes at:
 http://colorbrewer2.org/
 """
 
