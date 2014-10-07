@@ -12,9 +12,9 @@ For more functionality and colorsets see the brewer2mpl python package.
 def get_distinct_colors(num_colors):
     """
     Get any number of distinct colors.
-    
+
     If num_colors <= 12, the cbrewer palettes are used.
-    Otherwise the colors are generated algorithmically based on 
+    Otherwise the colors are generated algorithmically based on
     the HLS color model.
     """
     assert num_colors >= 0
@@ -25,8 +25,8 @@ def get_distinct_colors(num_colors):
             # in case cbrewer is not available.
             pass
     return get_arbitrary_n_of_distinct_colors(num_colors)
-        
-        
+
+
 def get_arbitrary_n_of_distinct_colors(num_colors):
     """
     Helper function for getting an arbitrary number of distinct colors.
@@ -50,15 +50,15 @@ def get_qualitative_brewer_colors(num_colors):
     except:
         print "Could not import brewer2mpl, do you have it in your $PYTHONPATH?"
         raise
-    
+
     assert num_colors <= 12, "max 12 colors are supported"
 
     if num_colors > 9:
-        brmap = br.get_map('Paired', 'Qualitative', num_colors) 
+        brmap = br.get_map('Paired', 'Qualitative', num_colors)
     else:
         brmap = br.get_map('Set1', 'Qualitative', num_colors)
-    return np.array(brmap.colors)/255
-        
+    return np.array(brmap.colors)/255.
+
 
 """
 See the original colorbrewer palettes at:
