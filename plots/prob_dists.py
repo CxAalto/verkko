@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from verkko.binner import bins
 
 
-def plot_pdf(values, ax=None, xscale='lin', xParam=None, yscale='lin'):
+def plot_pdf(values, ax=None, xscale='lin', yscale='lin', xParam=None):
     """
     Plots the probability density function of given values.
 
