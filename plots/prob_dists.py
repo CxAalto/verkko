@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 from verkko.binner import bins
 
 
-def plot_pdf(values, ax=None, xscale='lin', yscale='lin', xParam=None):
+def plot_pdf(values, ax=None,
+             xscale='lin', yscale='lin',
+             xParam=None, **kwargs):
     """
     Plots the probability density function of given values.
 
@@ -21,6 +23,9 @@ def plot_pdf(values, ax=None, xscale='lin', yscale='lin', xParam=None):
         'lin' or 'log'
     xParam : different things, optional
         see binner.Bins for more details
+    **kwargs : kwargs
+        keyword arguments that will be passed to matplotlib hist
+        function
 
     Returns
     -------
@@ -47,7 +52,7 @@ def plot_pdf(values, ax=None, xscale='lin', yscale='lin', xParam=None):
             xParam = 50
     xbins = bins.Bins(float, np.min(prop_vals),
                       np.max(prop_vals), xscale, xParam)
-    ax.hist(values, bins=xbins.bin_limits, normed=True)
+    ax.hist(values, bins=xbins.bin_limits, normed=True, **kwargs)
 
     if 'log' in xscale:
         ax.set_xscale('log')
