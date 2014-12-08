@@ -14,7 +14,8 @@ def plot_counts(x,
                 xParam=1.5,
                 yParam=1.5,
                 ax=None,
-                use_gridspec=False
+                use_gridspec=False,
+                plot_mean=True
                 ):
     """
     Plots the counts as a heatmap.
@@ -45,6 +46,8 @@ def plot_counts(x,
     use_gridspec : bool
          set true if subroutine plotting to a subplot with gridspec
          fixes the colorbar to the correct subplot
+    plot_mean : bool, optional
+        whether to plot the mean of each bin in x-direction
     """
 
     fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
@@ -56,7 +59,8 @@ def plot_counts(x,
                    cmap=cmap, norm=colors.LogNorm()
                    )
 
-    ax.plot(bin_centers, means, "go-")
+    if plot_mean:
+        ax.plot(bin_centers, means, "go-")
 
     cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
                         orientation='vertical',
@@ -72,8 +76,8 @@ def plot_prob_density(x,
                       xParam=1.5,
                       yParam=1.5,
                       ax=None,
-                      use_gridspec=False
-                      ):
+                      use_gridspec=False,
+                      plot_mean=True):
     """
     Plots the normalized probability density.
 
@@ -91,7 +95,8 @@ def plot_prob_density(x,
                    cmap=cmap, norm=colors.LogNorm()
                    )
 
-    ax.plot(bin_centers, means, "go-")
+    if plot_mean:
+        ax.plot(bin_centers, means, "go-")
 
     cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
                         orientation='vertical',
@@ -107,8 +112,8 @@ def plot_conditional_prob_density(x,
                                   xParam=np.sqrt(2),
                                   yParam=np.sqrt(2),
                                   ax=None,
-                                  use_gridspec=False
-                                  ):
+                                  use_gridspec=False,
+                                  plot_mean=True):
     """
     Plots the conditional probability density. (P(y|x)).
 
@@ -132,7 +137,8 @@ def plot_conditional_prob_density(x,
                    cmap=cmap, norm=colors.LogNorm()
                    )
 
-    ax.plot(bin_centers, means, "go-")
+    if plot_mean:
+        ax.plot(bin_centers, means, "go-")
 
     cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
                         orientation='vertical',
@@ -149,7 +155,7 @@ def _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=None):
         ax = fig.add_axes([0.1, y_low, 0.8, y_height])
         cax = fig.add_axes([0.92, y_low, 0.03, y_height])
     else:  # set colorbar axes to None so the
-            # space is stolen from the given plotting axes
+           # space is stolen from the given plotting axes
         cax = None
         fig = ax.get_figure()
 
