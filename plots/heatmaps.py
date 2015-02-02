@@ -15,7 +15,8 @@ def plot_counts(x,
                 yParam=1.5,
                 ax=None,
                 use_gridspec=False,
-                plot_mean=True
+                plot_mean=True,
+                colorbar_scale='log'
                 ):
     """
     Plots the counts as a heatmap.
@@ -48,6 +49,8 @@ def plot_counts(x,
          fixes the colorbar to the correct subplot
     plot_mean : bool, optional
         whether to plot the mean of each bin in x-direction
+    colorbar_scale : log, lin
+        colorbar scale
     """
 
     fig, ax, cax = _get_fig_ax_and_colorbar_ax(xscale, yscale, ax=ax)
@@ -62,9 +65,13 @@ def plot_counts(x,
     if plot_mean:
         ax.plot(bin_centers, means, "go-")
 
+    if colorbar_scale == 'log':
+        format = LogFormatterMathtext()
+    else:
+        format = None
     cbar = fig.colorbar(im, cax, ax=ax, use_gridspec=use_gridspec,
                         orientation='vertical',
-                        format=LogFormatterMathtext())
+                        format=format)
     return fig, ax, cbar, im
 
 
