@@ -44,7 +44,7 @@ def setFigureGrid(fig, grid_geometry=(2, 2)):
     return gs, axarr
 
 
-def setLegend(ax, lines=None, legends=None, loc='upper left'):
+def setLegend(ax, lines=None, legends=None, loc='upper left', ncol=1):
     '''
     Get the legend
     Input:
@@ -67,7 +67,7 @@ def setLegend(ax, lines=None, legends=None, loc='upper left'):
         print "No labeled objects found."
         return None
     else:
-        leg = ax.legend(lines, legends, loc=loc, numpoints=1, fancybox=True, handletextpad=0.2, borderpad=0.15, handlelength=2.0, columnspacing=0.5, )
+        leg = ax.legend(lines, legends, loc=loc, numpoints=1, fancybox=True, handletextpad=0.2, borderpad=0.15, handlelength=2.0, columnspacing=0.5, ncol=ncol, )
         leg.get_frame().set_alpha(0.5)
         leg.get_frame().set_lw(0.2)
         return leg
