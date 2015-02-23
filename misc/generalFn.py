@@ -98,6 +98,32 @@ def pairs(lst):
         prev = item
     yield item, first
 
+
+def sublist_ordered(a, b):
+    '''
+    Determine if all elements in a list are present and in the same order in another list
+    Input:
+        (list, list)
+    Output:
+        (bool)
+        True if a is in b (in same order)
+        False if a is not in b or not in same order
+    Usage:
+    >>> sublist_ordered([1, 12, 3], [25, 1, 30, 12, 3, 40])
+    False
+    >>> sublist_ordered([1, 12, 3], [25, 1, 30, 12, 3, 40])
+    True
+    >>> sublist_ordered([1, 12, 3, 12], [25, 1, 30, 12, 3, 40])
+    False
+    >>> sublist_ordered([1, 12, 3, 12], [25, 1, 30, 12, 3, 40, 12])
+    True
+    '''
+    try:
+        return a[0] in b and sublist_ordered(a[1:], b[1+b.index(a[0]):])
+    except IndexError:
+        return True
+
+
 ##################################################################
 #                   Some Special Function                        #
 ##################################################################
