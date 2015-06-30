@@ -136,7 +136,7 @@ def plot_counts(values, ax=None,
 
 
 def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
-              threshold_data=False, label=None):
+              threshold_data=False, label=None, discrete=True):
     """
     Plot the experimental 1-CDF of values.
 
@@ -147,6 +147,15 @@ def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
     bin_data : bool
         whether to use thresholds for drawing the plot
         (more efficient drawing if a lot of points present)
+    discrete : bool
+        If data is discrete, same value can be observed multiple
+        times which (if not treated correctly) can result in
+        sawtooth kind of figures.
+        There is perhaps no reason for not using discrete=bool
+        as there is little overhead (if not even) negative
+        overhead to the plotting (and it works also for
+        floating point numbers)
+
 
     Returns
     -------
@@ -167,6 +176,13 @@ def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
 
     xvals = np.sort(values)
     yvals = np.linspace(1, 1. / len(xvals), len(xvals))
+
+    if discrete:
+        # remove duplicate entries for some results
+        args = np.array([True]+list(xvals[:-1]!=xvals[1:]))
+        xvals = xvals[args]
+        yvals = yvals[args]
+
     ax.plot(xvals, yvals, label=label)
     if 'log' in xscale:
         ax.set_xscale('log')
