@@ -26,9 +26,10 @@ def setFigure(format='PNAS', fig_size=None, fig_ratio=None, ):
         if fig_size is None:
             fig_size = 8.6
 
-    fig = plt.figure()
-    params = fu.get_rcParams(fig_size, fig_ratio=fig_ratio, font_sizes=font_size)
+    params = fu.get_rcParams(
+        fig_size, fig_ratio=fig_ratio, font_sizes=font_size)
     plt.rcParams.update(params)
+    fig = plt.figure()
     return fig
 
 
@@ -67,7 +68,8 @@ def setLegend(ax, lines=None, legends=None, loc='upper left'):
         print "No labeled objects found."
         return None
     else:
-        leg = ax.legend(lines, legends, loc=loc, numpoints=1, fancybox=True, handletextpad=0.2, borderpad=0.15, handlelength=2.0, columnspacing=0.5, )
+        leg = ax.legend(lines, legends, loc=loc, numpoints=1, fancybox=True,
+                        handletextpad=0.2, borderpad=0.15, handlelength=2.0, columnspacing=0.5, )
         leg.get_frame().set_alpha(0.5)
         leg.get_frame().set_lw(0.2)
         return leg
@@ -146,4 +148,5 @@ def setFigureIndex(axarr, letters=None, xy=(0, 1), xytext=(6, -2)):
         axarr = [axarr]
 
     for ax, letter in zip(axarr, letters):
-        ax.annotate(letter, xy=xy, xytext=xytext, va='top', ha='center', xycoords='axes fraction', textcoords='offset points', size=8, weight='extra bold')
+        ax.annotate(letter, xy=xy, xytext=xytext, va='top', ha='center',
+                    xycoords='axes fraction', textcoords='offset points', size=8, weight='extra bold')

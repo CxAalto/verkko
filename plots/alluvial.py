@@ -8,7 +8,10 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
                   module_colors_1=None, module_colors_2=None,
                   ribbon_bglim=20, stable_ribbon_sizes_1=None,
                   stable_ribbon_sizes_2=None, ribbon_label_size=10,
-                  ribbon_label_HA="center"):
+                  ribbon_label_HA="center", vertical_pad_up_and_below=0.0,
+                  horizontal_pad_lr=0.05, vertical_pad_btw_modules=0.01,
+                  module_width=0.2
+                  ):
     """
     Plot a two-sided alluvial diagram to the ax given as parameter.
     See :py:mod:`test_alluvial` for examples.
@@ -39,6 +42,16 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
         the font size for the ribbon labels
     ribbon_label_HA : {"center", "left", "right"}, optional
         the horizontal alignment of the ribbon labels (defaulting to center)
+    vertical_pad_up_and_below : float, optional
+        how much empty margin left on top and bottom as a fraction of the total
+        size of the alluvial diagram
+    horizontal_pad_up_and_below : float, optional
+        how much empty margin left on left and right side of the diagram
+        as a fraction of the total size of the alluvial diagram
+    vertical_pad_btw_modules : float, optional
+        as a fraction
+    module_width : float, optional
+        by default 0.2 (20% of the width of the ax)
 
     """
     module_sizes_1 = np.sum(ribbon_size_matrix, axis=1)
@@ -66,13 +79,10 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
     max_n_modules = np.max([n_modules_1, n_modules_2])
     module_size_sum = np.maximum(np.sum(module_sizes_1),
                                  np.sum(module_sizes_2))
-    vertical_pad_btw_modules = 0.01  # percent of
-    vertical_pad_up_and_below = 0.00
-    horizontal_pad_lr = 0.05
     individual_node_size = (1 - 2 * vertical_pad_up_and_below -
                             vertical_pad_btw_modules *
                             (max_n_modules - 1)) / module_size_sum
-    module_width = 0.2  # should be in range [0,0.5-horizontal_pad_lr
+    # should be in range [0,0.5-horizontal_pad_lr
     mw = module_width
     # mwnsf: module width non shaded fraction
     #(to be able to differ from fully shaded to non-shaded)
@@ -168,7 +178,7 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
                     (1 - horizontal_pad_lr - module_width, y2_low),  # P3
                 ]
                 linewidth = 0.25
-                unstable_mask_color = (1, 1, 1, 0.3)
+                unstable_mask_color = (1, 1, 1, 0.75)
                 _plot_ribbon_using_bezier(ax, use_zorder, bezier_verts1_stable,
                                           bezier_verts2, unstable_mask_color,
                                           unstable_mask_color, lw=linewidth)
@@ -184,6 +194,7 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
                     ec=unstable_mask_color, lw=linewidth)
                 ax.add_patch(rect)
             zorder = zorder - 1
+
             if ribbon_label_matrix is not None:
                 s = ribbon_label_matrix[i][j]
                 if s != "":
@@ -191,8 +202,12 @@ def plot_alluvial(ax, ribbon_size_matrix, ribbon_label_matrix=None,
                         horizontal_pad_lr +
                         module_width, (ystart1 + yend1) / 2.,
                         s, color="0.1", va='center', ha=ribbon_label_HA,
-                        fontsize=ribbon_label_size, family="arial",
-                        fontweight='bold')
+                        fontsize=ribbon_label_size, fontweight='bold')
+                    ax.text(
+                        1 - horizontal_pad_lr -
+                        module_width, (ystart2 + yend2) / 2.,
+                        s, color="0.1", va='center', ha=ribbon_label_HA,
+                        fontsize=ribbon_label_size, fontweight='bold')
 
 
 def _plot_ribbon_using_bezier(ax, zorder, points1, points2, color1="gray",
