@@ -34,6 +34,78 @@ def plot_pdf(values, ax=None,
     ax : matplotlib Axes object
         the axes in which the pdf is plotted
     """
+
+    if not isinstance(values, np.ndarray):
+        values = np.array(values)
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    else:
+        fig = ax.get_figure()
+
+    if xscale == 'linlog':
+        values = np.array(values, dtype=int)
+        dataType = int
+    else:
+        dataType = float
+
+
+    indices = bins.get_reasonable_data_indices_for_binning(
+        values, xscale=xscale)
+
+    prop_vals = values[indices]
+
+    if xParam is None:
+        if xscale == 'log':
+            xParam = np.sqrt(2)  # just getting a nice factor of two...
+        if xscale == 'lin':
+            xParam = 50
+
+
+
+    xbins = bins.Bins(dataType, np.min(prop_vals),
+                      np.max(prop_vals), xscale, xParam)
+
+    ax.hist(values, bins=xbins.bin_limits, normed=True, **kwargs)
+
+    if 'log' in xscale:
+        ax.set_xscale('log')
+    if 'log' in yscale:
+        ax.set_yscale('log')
+
+    return fig, ax
+
+def plot_counts(values, ax=None,
+             xscale='lin', yscale='lin',
+             xParam=None, label=None, **kwargs):
+    """
+    Plots the probability density function of given values.
+
+    Parameters
+    ----------
+
+    values : numpy ndarray
+        the values for which the experimental pdf is computed
+    ax : matplotlib axes object, optional
+        axes to plot the figure in
+    xscale : str
+        'lin' or 'log', or ... (see binner.Bins for more details)
+    yscale : str
+        'lin' or 'log'
+    xParam : different things, optional
+        see binner.Bins for more details
+    **kwargs : kwargs
+        keyword arguments that will be passed to matplotlib hist
+        function
+
+    Returns
+    -------
+    fig : matplotlib Figure
+        the parent figure of the axes
+    ax : matplotlib Axes object
+        the axes in which the pdf is plotted
+    """
     if ax is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -52,7 +124,7 @@ def plot_pdf(values, ax=None,
             xParam = 50
     xbins = bins.Bins(float, np.min(prop_vals),
                       np.max(prop_vals), xscale, xParam)
-    ax.hist(values, bins=xbins.bin_limits, normed=True, **kwargs)
+    ax.hist(values, bins=xbins.bin_limits, normed=False, label=label, **kwargs)
 
     if 'log' in xscale:
         ax.set_xscale('log')
@@ -62,8 +134,9 @@ def plot_pdf(values, ax=None,
     return fig, ax
 
 
+
 def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
-              threshold_data=False):
+              threshold_data=False, label=None):
     """
     Plot the experimental 1-CDF of values.
 
@@ -93,8 +166,8 @@ def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
             " 1 - CDF, defaulting to basic stuff"
 
     xvals = np.sort(values)
-    yvals = np.linspace(1, 1 / len(xvals), len(xvals))
-    ax.plot(xvals, yvals)
+    yvals = np.linspace(1, 1. / len(xvals), len(xvals))
+    ax.plot(xvals, yvals, label=label)
     if 'log' in xscale:
         ax.set_xscale('log')
     if 'log' in yscale:
