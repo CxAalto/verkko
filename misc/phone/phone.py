@@ -97,6 +97,14 @@ class PhoneEvent(object):
             self.call = (fields[2] == "2")
             self.reversed = False
 
+	elif format=="simple":
+            self.fr = int(fields[0])
+            self.to = int(fields[1])
+            self.time = int(fields[2])
+            self.duration = 0
+            self.call = 0 #(fields[2] == "2")
+            self.reversed = False
+
     def getReversed(self):
         newEvent=PhoneEvent()
 
