@@ -453,7 +453,7 @@ class _BinLimits(tuple):
             raise ParameterError("'dataType' must be int or float")
 
         if minValue >= maxValue and binType != 'custom':
-            raise BinLimitError("minValue must be larger than maxValue.")
+            raise BinLimitError("minValue must be smaller than maxValue.")
 
         if binType in ('log', 'logarithmic', 'maxlog'):
             if minValue <= 0:
