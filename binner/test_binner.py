@@ -32,14 +32,14 @@ class TestBins(unittest.TestCase):
         """
         deco = [(c,d,w) for c,d,w in zip(self.coords, self.values, self.weights)]
         deco.sort()
-        print "Coords : " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(0), deco))
-        print "Values : " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(1), deco))
-        print "Weights: " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(2), deco))
-        print
-        print "Bin limits: ", self.bins.bin_limits
-        print "Bin centers:", self.bins.centers
-        print "Bin widths: ", self.bins.widths
-        print
+        print("Coords : " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(0), deco)))
+        print("Values : " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(1), deco)))
+        print("Weights: " + reduce(lambda x,y: str(x)+"\t"+str(y), map(itemgetter(2), deco)))
+        print()
+        print("Bin limits: ", self.bins.bin_limits)
+        print("Bin centers:", self.bins.centers)
+        print("Bin widths: ", self.bins.widths)
+        print()
 
     def test_binFinder(self):
         bins = [1, 5, 9, 13, 17, 21, 25, 29, 33]

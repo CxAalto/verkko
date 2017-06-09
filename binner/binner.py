@@ -727,7 +727,7 @@ class Bins(object):
                 try:
                     binCounts[curr_bin] += 1
                 except IndexError:
-                    print "IndexError in bin_count."
+                    print ("IndexError in bin_count.")
                     print ("   Value    %g" % (elem,))
                     print ("   Interval [%g, %g]" % (self.bin_limits.minValue,
                                                      self.bin_limits.maxValue))

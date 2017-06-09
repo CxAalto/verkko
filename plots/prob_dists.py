@@ -171,8 +171,8 @@ def plot_ccdf(values, ax=None, xscale='lin', xParam=None, yscale='log',
         fig = ax.get_figure()
 
     if threshold_data:
-        print "no thresholding implemented yet in plotting" + \
-            " 1 - CDF, defaulting to basic stuff"
+        print("no thresholding implemented yet in plotting" + \
+            " 1 - CDF, defaulting to basic stuff")
 
     xvals = np.sort(values)
     yvals = np.linspace(1, 1. / len(xvals), len(xvals))

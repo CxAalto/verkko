@@ -138,11 +138,11 @@ if __name__ ==  '__main__':
         for key in d.iterkeys():
             if arg and not eval(arg):
                     continue
-            print repr(key)
+            print(repr(key))
 
     if cmd == 'del':
         for key in d.iterkeys():
             if not eval(arg):
                 continue
-            print repr(key)
+            print(repr(key))
             #del d[key]

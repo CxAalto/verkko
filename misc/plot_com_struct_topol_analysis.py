@@ -29,7 +29,7 @@ from sys import argv
 def main():
     #argv and read inputfile
     if (len(argv) < 3):
-       print '\n PLOTS WILL NOT BE SAVED. If you want them saved, give absolute path (and ending with \"/\") of output directory as argument.'
+       print('\n PLOTS WILL NOT BE SAVED. If you want them saved, give absolute path (and ending with \"/\") of output directory as argument.')
        saveplots = 0
     analysis_file = argv[1]
     #if dir provided, flag to save plots

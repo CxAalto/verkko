@@ -24,7 +24,7 @@ def main(argv=None):
         import sys
         argv = sys.argv
 
-    print argv
+    print(argv)
     del argv[0] # The script calling this.
 
     if len(argv) > 0 and argv[0] == '-m':

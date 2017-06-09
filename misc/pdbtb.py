@@ -63,7 +63,7 @@ def run(func, *args, **kwargs):
         _run_history[:] = _get_history(first=old_hist_start)
     readline.clear_history()
     _restore_history(old_hist)
-    print old_hist
+    print(old_hist)
 run_ipython = run
 
 def now(frame=None, stackLevel=1):

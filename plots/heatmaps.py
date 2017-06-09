@@ -30,9 +30,9 @@ def plot_counts(x,
         if xbins and ybins are both given
     cmap : matplotlib.cm
         colormap to use for the plot, defaulting to summer
-    xscale : {"log", "linear", "linlog", ...}, optional
+    xscale : {"log", "lin", "linlog", ...}, optional
         see binner.binner or binner.bins for more info on the options
-    yscale : {"log", "linear", "linlog", ...}, optional
+    yscale : {"log", "lin", "linlog", ...}, optional
         see binner.binner or binner.bins for more info on the options
     xParam : varies according to xscale
         if xscale == 'log'

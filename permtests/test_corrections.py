@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
         q = 0.2
         p_thresh, significants = corrections.fdr_bh(
             q, self.test_data_1, return_significant=True)
-        print p_thresh
+        print(p_thresh)
         assert p_thresh > 0.1
         assert p_thresh < 0.12
         assert np.sum(significants) > 100
