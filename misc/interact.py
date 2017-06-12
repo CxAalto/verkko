@@ -21,7 +21,7 @@ Run from command line and drop into PDB upon each traceback:
 ... or enable it from python:
   import fitz.pdbtb ; pdbtb.enable()
 """
-
+from __future__ import print_function
 import code
 import inspect
 import os

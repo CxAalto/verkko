@@ -28,7 +28,7 @@ Example of the coroutine interface:
    binned_data = bin_counter.next()
 """
 
-
+from __future__ import print_function
 from math import ceil, floor, sqrt
 from operator import itemgetter
 import numpy as np

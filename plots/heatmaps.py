@@ -1,3 +1,4 @@
+from __future__ import print_function
 import scipy.stats
 import numpy as np
 from verkko.binner import bins

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import bootstrap as bs
 import numpy as np
 

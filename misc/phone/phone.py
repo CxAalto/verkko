@@ -41,7 +41,7 @@ matter of minutes:
 422893707
 
 """
-
+from __future__ import print_function
 import os
 from sys import stdout
 import numpy as np

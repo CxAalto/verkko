@@ -20,7 +20,7 @@ python plot_com_struct_topol_analysis.py n_sms_and_calls_as_w_average_community_
 Jon Eiesland
 May 2009
 """
-
+from __future__ import print_function
 from pylab import *
 from binner import * # lce-made binning module for plotting also found in the Python_aux in the cvs
 from numpy import *

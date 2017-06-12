@@ -1,6 +1,6 @@
 # Richard Darst, November 2011
 # Based on something from at least before December 2010
-
+from __future__ import print_function
 import runpy
 
 def main(argv=None):

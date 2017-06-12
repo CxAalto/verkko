@@ -27,7 +27,7 @@ python com_struct_topol_analysis.py 4-3_cliques_links_nonunit_w.edg
 Jon Eiesland
 May 2009
 """
-
+from __future__ import print_function
 from netpython import * # lce-made net library found in
                         # networks/EDEN/nwtool/netpython
 

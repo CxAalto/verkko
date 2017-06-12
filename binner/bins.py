@@ -1,4 +1,5 @@
 #!/usr/bin/python2.6
+from __future__ import print_function
 import numpy as np
 from math import ceil, floor, sqrt
 
