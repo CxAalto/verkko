@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-
+from __future__ import absolute_import, print_function
 import numpy as np
 import binner
 
@@ -28,7 +27,7 @@ def densityPlot(x,y,bins2D=None,bins=None,xscale='log',yscale='log',nbinsX=1.5,n
         xidx,yidx=getLimits2D(x,y,xscale,yscale)
         minValueX, maxValueX = min(x[xidx]), max(x[xidx]) 
         minValueY, maxValueY = min(y[yidx]), max(y[yidx])
-        print minValueX, maxValueX, minValueY, maxValueY
+        print(minValueX, maxValueX, minValueY, maxValueY)
         bins2D = binner.Bins2D(float, minValueX, maxValueX, xscale, nbinsX, float, minValueY, maxValueY, yscale, nbinsY)
         bins=binner.Bins(float, minValueX, maxValueX, xscale, nbinsX)
     

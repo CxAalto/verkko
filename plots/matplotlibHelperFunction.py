@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -65,7 +65,7 @@ def setLegend(ax, lines=None, legends=None, loc='upper left', ncol=1):
         legends = ax.get_legend()
 
     if lines is None or legends is None:
-        print "No labeled objects found."
+        print("No labeled objects found.")
         return None
     else:
         leg = ax.legend(lines, legends, loc=loc, numpoints=1, fancybox=True, handletextpad=0.2, borderpad=0.15, handlelength=2.0, columnspacing=0.5, ncol=ncol, )

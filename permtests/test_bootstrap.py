@@ -1,3 +1,4 @@
+from __future__ import print_function
 import bootstrap as bs
 import numpy as np
 
@@ -34,7 +35,7 @@ class Test(unittest.TestCase):
                          [2, 3, 2, 3],
                          [3, 4, 3, 4]])
         percentiles = bs.mean_conf_interval(data, 1000, 100)
-        print percentiles.shape == (3, 2)
+        print(percentiles.shape == (3, 2))
         assert (percentiles[0] < percentiles[1]).all()
         assert percentiles[0, 0] < 1.3
         assert percentiles[2, 1] > 3.7

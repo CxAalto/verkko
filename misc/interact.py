@@ -21,7 +21,7 @@ Run from command line and drop into PDB upon each traceback:
 ... or enable it from python:
   import fitz.pdbtb ; pdbtb.enable()
 """
-
+from __future__ import print_function
 import code
 import inspect
 import os
@@ -53,7 +53,7 @@ def interact(banner="", local=None, stackLevel=1, frame=None,
 
     """
     if len(banner) > 0:
-        print banner
+        print(banner)
     # Get data from calling frame
     #calling_data = inspect.stack()[stackLevel]
     #filename = calling_data[1]
@@ -183,7 +183,7 @@ class InteractiveConsole(code.InteractiveConsole):
             self.showtraceback()
         else:
             if code.softspace(sys.stdout, 0):
-                print
+                print()
 
 def interact2(banner=None, readfunc=None, local=None, global_=None):
     """Closely emulate `code.interact`

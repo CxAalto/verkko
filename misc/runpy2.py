@@ -1,6 +1,6 @@
 # Richard Darst, November 2011
 # Based on something from at least before December 2010
-
+from __future__ import print_function
 import runpy
 
 def main(argv=None):
@@ -24,7 +24,7 @@ def main(argv=None):
         import sys
         argv = sys.argv
 
-    print argv
+    print(argv)
     del argv[0] # The script calling this.
 
     if len(argv) > 0 and argv[0] == '-m':

@@ -20,7 +20,7 @@ python plot_com_struct_topol_analysis.py n_sms_and_calls_as_w_average_community_
 Jon Eiesland
 May 2009
 """
-
+from __future__ import print_function
 from pylab import *
 from binner import * # lce-made binning module for plotting also found in the Python_aux in the cvs
 from numpy import *
@@ -29,7 +29,7 @@ from sys import argv
 def main():
     #argv and read inputfile
     if (len(argv) < 3):
-       print '\n PLOTS WILL NOT BE SAVED. If you want them saved, give absolute path (and ending with \"/\") of output directory as argument.'
+       print('\n PLOTS WILL NOT BE SAVED. If you want them saved, give absolute path (and ending with \"/\") of output directory as argument.')
        saveplots = 0
     analysis_file = argv[1]
     #if dir provided, flag to save plots

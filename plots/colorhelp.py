@@ -1,3 +1,4 @@
+from __future__ import print_function
 import colorsys
 import numpy as np
 
@@ -48,7 +49,7 @@ def get_qualitative_brewer_colors(num_colors):
     try:
         import brewer2mpl as br
     except:
-        print "Could not import brewer2mpl, do you have it in your $PYTHONPATH?"
+        print("Could not import brewer2mpl, do you have it in your $PYTHONPATH?")
         raise
 
     assert num_colors <= 12, "max 12 colors are supported"

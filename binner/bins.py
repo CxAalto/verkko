@@ -1,4 +1,5 @@
 #!/usr/bin/python2.6
+from __future__ import print_function
 import numpy as np
 from math import ceil, floor, sqrt
 
@@ -453,7 +454,7 @@ class _BinLimits(tuple):
             raise ParameterError("'dataType' must be int or float")
 
         if minValue >= maxValue and binType != 'custom':
-            raise BinLimitError("minValue must be larger than maxValue.")
+            raise BinLimitError("minValue must be smaller than maxValue.")
 
         if binType in ('log', 'logarithmic', 'maxlog'):
             if minValue <= 0:

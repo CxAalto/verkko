@@ -28,7 +28,7 @@ Example of the coroutine interface:
    binned_data = bin_counter.next()
 """
 
-
+from __future__ import print_function
 from math import ceil, floor, sqrt
 from operator import itemgetter
 import numpy as np
@@ -727,7 +727,7 @@ class Bins(object):
                 try:
                     binCounts[curr_bin] += 1
                 except IndexError:
-                    print "IndexError in bin_count."
+                    print ("IndexError in bin_count.")
                     print ("   Value    %g" % (elem,))
                     print ("   Interval [%g, %g]" % (self.bin_limits.minValue,
                                                      self.bin_limits.maxValue))

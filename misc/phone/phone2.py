@@ -41,7 +41,7 @@ matter of minutes:
 422893707
 
 """
-
+from __future__ import print_function
 import os
 from sys import stdout
 import numpy
@@ -140,7 +140,7 @@ class PhoneEvents(object):
             yield nextEvent
             nextEvent=iterator.next()
             lastEventContainer[0]=nextEvent
-        print lastEventContainer
+        print(lastEventContainer)
 
     def getUsers_new(self):
 
@@ -368,7 +368,7 @@ class PhoneEventsContainer(PhoneEvents):
                             self._addEvent(thisEvent,lineNumber)
 
                         if verbose and lineNumber % 1000000 == 0:
-                            print lineNumber
+                            print(lineNumber)
 
                         lineNumber += 1
         else:
@@ -457,7 +457,7 @@ class PhoneEventsContainer(PhoneEvents):
             for i1, e in enumerate(it):
                 if e['time'] >= t1: break
             i1 += i0
-            print "i0 = %d, i1 = %d" % (i0,i1)
+            print("i0 = %d, i1 = %d" % (i0,i1))
             self.eventData = self.eventData[i0:i1]
         else:
             I = []

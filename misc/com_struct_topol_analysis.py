@@ -27,7 +27,7 @@ python com_struct_topol_analysis.py 4-3_cliques_links_nonunit_w.edg
 Jon Eiesland
 May 2009
 """
-
+from __future__ import print_function
 from netpython import * # lce-made net library found in
                         # networks/EDEN/nwtool/netpython
 
@@ -36,10 +36,10 @@ import numpy as np
 
 def main():
     if len(argv) < 4:
-        print "Please give arguments. \n \
+        print("Please give arguments. \n \
         1 - full net's edgefile (source dest weight)\n \
         2 - file with nodes in each community from Jussi Kumpula's clique percolation code (all the nodes in one community on one line) \n \
-        3 - directory for analysis output (ending with '/') \n "
+        3 - directory for analysis output (ending with '/') \n ")
         exit()
 
     # Args
@@ -48,9 +48,9 @@ def main():
     out_dir = argv[3]
 
     # Open full net, arg 1
-    print 'Beginning to read full net (Phone net, N_nodes 10^6 took 8 mins) ...'
+    print('Beginning to read full net (Phone net, N_nodes 10^6 took 8 mins) ...')
     net=netio.loadNet(full_net_edg)
-    print 'Full net read. Reading communities, doing analysis and writing to file...'
+    print('Full net read. Reading communities, doing analysis and writing to file...')
 
     # Read component nodes list, arg 2
     f = open(comp_nodes_list)
